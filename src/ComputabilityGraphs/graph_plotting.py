@@ -5,7 +5,7 @@ from frozendict import frozendict
 import networkx as nx
 import numpy as np
 
-from bgc_md2.resolve.graph_helpers import (
+from ComputabilityGraphs.graph_helpers import (
     update_generator,
     minimal_startnodes_for_node,
 )

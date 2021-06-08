@@ -21,7 +21,7 @@
       cd tests
       ./run_tests.py
       ```
-      If you can run this script successfully, you have a working installation of bgc_md and can run all functions. 
+      If you can run this script successfully, you have a working installation of ComputabilityGraphs and can run all functions. 
   
    * Troubleshooting:
       * We noticed that in MacOS, it is necessary to update packages in the conda environment before running the tests successfully.

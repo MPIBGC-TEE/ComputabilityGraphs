@@ -2,7 +2,7 @@ from string import ascii_lowercase, ascii_uppercase
 from frozendict import frozendict
 from functools import _lru_cache_wrapper
 import inspect
-from . import computers as cmod
+#from . import computers as cmod
 from . import non_graph_helpers as ngh
 
 def list_mult(ll):
@@ -20,7 +20,7 @@ def list_mult(ll):
     return list_mult(ll[0:-2]+[new_last])
 
 
-def bgc_md2_computers():
+def module_computers(cmod):
     #sep = "."
     #pkg_name = __name__.split(sep)[0]
     #cmod = importlib.import_module(".resolve.computers", package=pkg_name)
@@ -35,17 +35,17 @@ def bgc_md2_computers():
     )
 
 
-def bgc_md2_computer_aliases():
+def module_computer_aliases(cmod):
     comp_abbreviations = list_mult([ascii_lowercase for i in range(2)])
     return frozendict({
         v.__name__: comp_abbreviations[i]
-        for i, v in enumerate(bgc_md2_computers())
+        for i, v in enumerate(module_computers(cmod))
     })
 
 
-def bgc_md2_mvar_aliases():
+def module_mvar_aliases(cmod):
     var_abbreviations = list_mult([ascii_uppercase for i in range(2)])
-    allVars = ngh.all_mvars(bgc_md2_computers())
+    allVars = ngh.all_mvars(module_computers(cmod))
     return frozendict({
         name: var_abbreviations[i]
         for i, name in enumerate(sorted(map(lambda v: v.__name__, allVars)))

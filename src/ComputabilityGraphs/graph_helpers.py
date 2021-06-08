@@ -1,5 +1,6 @@
 from functools import lru_cache, reduce
 import networkx as nx
+import time
 import matplotlib.pyplot as plt
 from matplotlib.colors import CSS4_COLORS, BASE_COLORS, TABLEAU_COLORS
 from pygraphviz.agraph import AGraph
@@ -23,6 +24,16 @@ from .non_graph_helpers import (
     all_computers_for_mvar,
     pretty_name,
 )
+#a decorator to time the execution of some of the graph building functions
+def mm_timeit(f):
+    def timed(*args,**kw):
+        ts = time.time()
+        result = f(*args,**kw)
+        te = time.time()
+        print("func:"+str(f.__name__)+": "+str(te-ts))
+        return result
+
+    return timed
 
 
 def compset_2_string(compset):
@@ -34,8 +45,9 @@ def node_2_string(node):
 
 
 def nodes_2_string(node):
-    return "[ " + ",".join([node_2_string(n) for n in node]) + " ]"
-
+    return "[ " + ",".join(
+        [node_2_string(n) for n in node]
+    ) + " ]"
 
 def edge_2_string(e):
     return "(" + node_2_string(e[0]) + "," + node_2_string(e[1]) + ")"
@@ -58,7 +70,7 @@ def equivalent_singlegraphs(g1_single: nx.DiGraph, g2_single: nx.DiGraph) -> boo
         ]
     ) & (g1_single.nodes() == g2_single.nodes())
 
-
+@mm_timeit
 def equivalent_multigraphs(
     g1_multi: nx.MultiDiGraph, g2_multi: nx.MultiDiGraph
 ) -> bool:
@@ -100,7 +112,32 @@ def arg_set_graph(mvar: type, allComputers: Set[Callable]) -> nx.MultiDiGraph:
         g.add_edge(arg_set(c), target, computers=frozenset({c}))
     return g
 
+@lru_cache(maxsize=None)
+def arg_set_graph_2(mvar: type, allComputers: Set[Callable]) -> Tuple[nx.MultiDiGraph,Set[Set]]:
+    # return a tuple the subgraph of arg_name_sets for all computers that
+    # return this mvar
+    # For compatibility we return a multigraph
+    # although we do not have more than one edge between a pair
+    # of nodes
+    target = frozenset({mvar})
+    tups = [(arg_set(c),frozenset({c})) for c in all_computers_for_mvar(mvar, allComputers)]
+    def combine(acc,el):
+        g,nodes = acc
+        node,comp = el
+        g_n = g.add_edge(node,target,computers=comp)
+        nodes_n = nodes.union(node)
+        return (g_n,nodes_n)
 
+    g,nodes = reduce(combine,tups,(nx.MultiDiGraph(),frozenset([])))
+
+    #g = nx.MultiDiGraph()
+    #g.add_node(target)
+    #for c in all_computers_for_mvar(mvar, allComputers):
+    #    g.add_edge(arg_set(c), target, computers=frozenset({c}))
+    return (g,nodes)
+
+
+#@mm_timeit
 def product_graph(*graphs: Tuple[nx.MultiDiGraph]) -> nx.MultiDiGraph:
     return reduce(lambda u, v: product_graph_2(u, v), graphs)
 
@@ -141,8 +178,29 @@ def initial_sparse_powerset_graph(computers: Set[Callable]) -> nx.MultiDiGraph:
         spsg.add_edges_from(arg_set_graph(v, computers).edges(data=True))
     return spsg
 
+def initial_sparse_powerset_graph_2(computers: Set[Callable]) -> Tuple[nx.MultiDiGraph,Set[Set]]:
+    #spsg = nx.MultiDiGraph()
+    allMvars = all_mvars(computers)
+    initial_tups = [arg_set_graph_2(v, computers) for v in allMvars]
+    def combine(acc,el):
+        g,all_nodes = acc
+        sub_g,sub_nodes = el
+        spsg=copy(g)
+        ag,comp_nodes=el
+        return (spsg.add_edges_from(sub_g.edges(data=True)),all_nodes.union(sub_nodes))
 
-def update_step(spsg: nx.MultiDiGraph, computers: Set[Callable]) -> nx.MultiDiGraph:
+    spsg,nodes = reduce(comb,initial_tups,nx.MultiDiGraph(),frozenset([]))
+    #for v in allMvars:
+    #    asg = arg_set_graph(v, computers)
+    #    new_node
+    #    spsg.add_edges_from(asg.edges(data=True))
+    return (spsg,nodes)
+
+#@mm_timeit
+def update_step(
+        spsg: nx.MultiDiGraph, 
+        computers: Set[Callable]
+    ) -> nx.MultiDiGraph:
     new = deepcopy(spsg)
     start_nodes = [n for n in new.nodes() if len(new.in_edges(n)) == 0]
     # fixme: the startnode choice is too exclusive
@@ -157,6 +215,16 @@ def update_step(spsg: nx.MultiDiGraph, computers: Set[Callable]) -> nx.MultiDiGr
 @lru_cache
 def sparse_powerset_graph(computers: Set[Callable]) -> nx.MultiDiGraph:
     old = initial_sparse_powerset_graph(computers)
+    new = update_step(old, computers)
+    while not (equivalent_multigraphs(old, new)):
+        old = deepcopy(new)
+        new = update_step(old, computers)
+        # print(equivalent_multigraphs(old, new))
+    return new
+
+@lru_cache
+def sparse_powerset_graph_2(computers: Set[Callable]) -> nx.MultiDiGraph:
+    old_g,next_nodes = initial_sparse_powerset_graph_2(computers)
     new = update_step(old, computers)
     while not (equivalent_multigraphs(old, new)):
         old = deepcopy(new)
