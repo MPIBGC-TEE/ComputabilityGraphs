@@ -4,6 +4,7 @@ from functools import _lru_cache_wrapper
 import inspect
 #from . import computers as cmod
 from . import non_graph_helpers as ngh
+from copy import copy
 
 def list_mult(ll):
     # tensor product of list....
@@ -50,3 +51,10 @@ def module_mvar_aliases(cmod):
         name: var_abbreviations[i]
         for i, name in enumerate(sorted(map(lambda v: v.__name__, allVars)))
     })
+
+def merge_dicts(d1, d2):
+    print(type(d1))
+    print(type(d2))
+    e = copy(dict(d1))
+    e.update(d2)
+    return frozendict(e)

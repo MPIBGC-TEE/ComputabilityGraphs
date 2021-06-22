@@ -27,28 +27,29 @@ from copy import copy, deepcopy
 #    # draw_multigraph_plotly,
 #    # draw_Graph_svg,
 #)
-#from ComputabilityGraphs.graph_plotting import (
+from ComputabilityGraphs.graph_plotting import (
+     draw_FastGraph_matplotlib,
 #    draw_update_sequence,
 #    draw_ComputerSetDiGraph_matplotlib,
-#    draw_ComputerSetMultiDiGraph_matplotlib,
-#)
+    draw_ComputerSetMultiDiGraph_matplotlib
+)
 #from ComputabilityGraphs.non_graph_helpers import arg_set_set, all_mvars
 #
 from testComputers import  A, A1, A2, A3, A0, A_minus_1, A_minus_2, B, B1, B2, B3, B0, B_minus_1, B_minus_2, C, D, E, F, G, H, I, X, Y
 from testComputers import computers
 from testComputers import ( 
     a_from_x,
-	b_from_y,
-	a_from_y,
-	b_from_x,
-	a_from_z,
-	b_from_z,
-	c_from_b,
-	d_from_b,
-	d_from_g_h,
-	a2_from_a1,
-	a3_from_a2,
-	b_minus_1_from_b_minus_2,
+    b_from_y,
+    a_from_y,
+    b_from_x,
+    a_from_z,
+    b_from_z,
+    c_from_b,
+    d_from_b,
+    d_from_g_h,
+    a2_from_a1,
+    a3_from_a2,
+    b_minus_1_from_b_minus_2,
     b0_from_b_minus_1,
     a_minus_1_from_a_minus_2,
     a1_from_a0,
@@ -57,7 +58,8 @@ from testComputers import (
     b2_from_b1,
     b3_from_b2,
     a0_from_b0
-    )
+)
+
 
 class TestFastGraphs(InDirTest):
     def setUp(self):
@@ -116,6 +118,13 @@ class TestFastGraphs(InDirTest):
             dn3,
             computers=frozenset({b1_from_b0})
         )
+        fig = plt.figure(figsize=(20, 20))
+        ax1 = fig.add_subplot(1, 2, 1)
+        ax2 = fig.add_subplot(1, 2, 2)
+        draw_FastGraph_matplotlib(
+            ax1,
+            g,
+        )
         (sets,partitions) = bipartite.sets(g) 
         # or alternatively
         top_nodes = {n for n, d in g.nodes(data=True) if d["bipartite"] == 0}
@@ -124,3 +133,8 @@ class TestFastGraphs(InDirTest):
         #g_new = replaceNode(src=A2,repl=
         G = bipartite.projected_graph(g, top_nodes)
 
+        draw_ComputerSetMultiDiGraph_matplotlib(
+            ax2,
+            G
+        )
+        fig.savefig("projection.pdf")

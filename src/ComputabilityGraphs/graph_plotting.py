@@ -12,6 +12,7 @@ from ComputabilityGraphs.graph_helpers import (
 from .non_graph_helpers import (
     pretty_name,
 )
+from .helpers import merge_dicts
 
 
 def compset_2_string(compset, aliases=frozendict({})):
@@ -20,6 +21,15 @@ def compset_2_string(compset, aliases=frozendict({})):
 
 def node_2_string(node, aliases=frozendict({})):
     return "{" + ",".join([pretty_name(v, aliases) for v in node]) + "}"
+
+def varset_2_string(node, aliases=frozendict({})):
+    return "{" + ",".join([pretty_name(v, aliases) for v in node]) + "}"
+
+def varsettuple_2_string(node_tuple, aliases=frozendict({})):
+    active,passive = node_tuple 
+    res = "{" + ",".join([pretty_name(v, aliases) for v in active]) + "}" \
+            + "{" + ",".join([pretty_name(v, aliases) for v in passive]) + "}"
+    return res    
 
 
 def nodes_2_string(node, aliases=frozendict({})):
@@ -67,6 +77,103 @@ def draw_update_sequence(
         )
 
 
+def draw_FastGraph_matplotlib(
+    ax,
+    spsg,
+    mvar_aliases=frozendict({}),
+    computer_aliases=frozendict({}),
+    targetNode=None,
+    pos=None,
+    **kwargs
+):
+    top_nodes = frozenset({n for n, d in spsg.nodes(data=True) if d["bipartite"] == 0})
+    bottom_nodes = frozenset( set(spsg) - top_nodes )
+    set_labels = {n: varset_2_string(n, mvar_aliases) for n in top_nodes}
+    decomp_labels = {n: varsettuple_2_string(n, mvar_aliases) for n in bottom_nodes}
+    labels = merge_dicts(set_labels, decomp_labels)
+    if pos is None:
+        # layout alternatives
+        # pos = nx.spring_layout(spsg)
+        # pos = nx.circular_layout(spsg)
+        # pos = nx.spring_layout(spsg, iterations=20)
+        # pos = nx.circular_layout(spsg )
+        pos = nx.kamada_kawai_layout(spsg)
+        # pos = nx.planar_layout(spsg)
+        # pos = nx.random_layout(spsg)
+        # pos = nx.shell_layout(spsg)
+        # pos = nx.spectral_layout(spsg)
+        # pos = nx.spiral_layout(spsg)
+    
+    nx.draw_networkx_labels(
+        spsg,
+        labels=labels,
+        ax=ax,
+        font_color='black',
+        pos=pos,
+        **kwargs
+    )
+    nx.draw_networkx_edges(
+        spsg,
+        #labels=labels,
+        ax=ax,
+        pos=pos,
+    )
+    nx.draw_networkx_nodes(
+        spsg,
+        ax=ax,
+        pos=pos,
+        node_size=1000,
+        nodelist=list(top_nodes),
+        node_color='b',
+        alpha=0.8
+    )
+    nx.draw_networkx_nodes(
+        spsg,
+        ax=ax,
+        pos=pos,
+        nodelist=list(bottom_nodes),
+        node_color='g',
+        alpha=0.8
+    )
+    if targetNode is not None:
+        res = minimal_startnodes_for_node(spsg, targetNode)
+        nx.draw_networkx_nodes(
+            spsg,
+            pos,
+            nodelist=[targetNode],
+            node_color='r',
+            alpha=0.8
+        )
+        nx.draw_networkx_nodes(
+            spsg,
+            pos,
+            nodelist=list(res),
+            node_color='r',
+            alpha=0.4
+        )
+
+    ax.axis("On")
+    # at the moment it is not possible to draw
+    # more than one edge (egde_lables) between nodes
+    # directly (no edgelabels for MultiDiGraphs)
+    # therefore we draw only one line for all computersets
+    # and assemble the label from the different edges
+    def edgeDict_to_string(ed):
+        target = "computers"
+        comp_sets = [v[target] for v in ed.values() if target in v.keys()]
+        comp_set_strings = [compset_2_string(cs, computer_aliases) for cs in comp_sets]
+        res = "\n".join(comp_set_strings)
+        # print(res)
+        return res
+
+    #edge_labels = {e: edgeDict_to_string(spsg.get_edge_data(*e)) for e in spsg.edges()}
+
+    #nx.draw_networkx_edge_labels(spsg, ax=ax, edge_labels=edge_labels, pos=pos)
+    mvar_aliases_inv = {val: key for key, val in mvar_aliases.items()}
+    for i, k in enumerate(sorted(mvar_aliases_inv.keys())):
+        ax.text(0, 0 - i / len(mvar_aliases), k + ": " + mvar_aliases_inv[k])
+
+
 def draw_ComputerSetDiGraph_matplotlib(
     spsg: nx.DiGraph,
     ax,
@@ -93,7 +200,6 @@ def draw_ComputerSetDiGraph_matplotlib(
         e: compset_2_string(spsg.get_edge_data(*e)["computers"]) for e in spsg.edges()
     }
     nx.draw_networkx_edge_labels(spsg, ax=ax, edge_labels=edge_labels, pos=pos)
-
 
 def draw_ComputerSetMultiDiGraph_matplotlib(
     ax,
