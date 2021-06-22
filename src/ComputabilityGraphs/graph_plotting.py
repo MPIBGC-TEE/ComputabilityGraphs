@@ -153,22 +153,24 @@ def draw_FastGraph_matplotlib(
         )
 
     ax.axis("On")
+
     # at the moment it is not possible to draw
     # more than one edge (egde_lables) between nodes
     # directly (no edgelabels for MultiDiGraphs)
     # therefore we draw only one line for all computersets
-    # and assemble the label from the different edges
     def edgeDict_to_string(ed):
-        target = "computers"
-        comp_sets = [v[target] for v in ed.values() if target in v.keys()]
-        comp_set_strings = [compset_2_string(cs, computer_aliases) for cs in comp_sets]
-        res = "\n".join(comp_set_strings)
-        # print(res)
-        return res
+        target = "computer_sets"
+        if target in ed.keys():
+            comp_sets=ed[target]
+            comp_set_strings= [compset_2_string(cs, computer_aliases) for cs in comp_sets]
+            res = "\n".join(comp_set_strings)
+        else:
+            res=''
+        return res 
 
-    #edge_labels = {e: edgeDict_to_string(spsg.get_edge_data(*e)) for e in spsg.edges()}
+    edge_labels = {e: edgeDict_to_string(spsg.get_edge_data(*e)) for e in spsg.edges()}
 
-    #nx.draw_networkx_edge_labels(spsg, ax=ax, edge_labels=edge_labels, pos=pos)
+    nx.draw_networkx_edge_labels(spsg, ax=ax, edge_labels=edge_labels, pos=pos)
     mvar_aliases_inv = {val: key for key, val in mvar_aliases.items()}
     for i, k in enumerate(sorted(mvar_aliases_inv.keys())):
         ax.text(0, 0 - i / len(mvar_aliases), k + ": " + mvar_aliases_inv[k])

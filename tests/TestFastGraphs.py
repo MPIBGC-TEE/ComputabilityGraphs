@@ -8,7 +8,7 @@ from testinfrastructure.InDirTest import InDirTest
 from testinfrastructure.helpers import pp, pe
 from unittest import skip
 from copy import copy, deepcopy
-
+from ComputabilityGraphs.fast_graph_helpers import add_combi_arg_set_graph
 #from ComputabilityGraphs.graph_helpers import (
 #    arg_set_graph,
 #    initial_sparse_powerset_graph,
@@ -137,4 +137,79 @@ class TestFastGraphs(InDirTest):
             ax2,
             G
         )
-        fig.savefig("projection.pdf")
+        fig.savefig("figure.pdf")
+
+    def test_add_arg_set(self):
+        # var set
+        sn1 = frozenset([A3, B1])
+        sn11 = frozenset([A2, B0])
+        #sn12 = frozenset([A2, B1])
+        #sn13 = frozenset([A3, B0])
+        # decomposition
+        dn1 = (
+            frozenset([A3, B1]),    # active
+            frozenset([])           # passive
+        )
+        dn2 = (
+            frozenset([A3]),        # active
+            frozenset([B1])         # pass
+        )
+        dn3 = (
+            frozenset([B1]),        # active
+            frozenset([A3])         # pass
+        )
+        g = nx.DiGraph()
+        g.add_node(sn1, bipartite=0)
+
+        g.add_node(dn1, bipartite=1)
+        g.add_edge(dn1, sn1)
+
+        g.add_node(dn2, bipartite=1)
+        g.add_edge(dn2, sn1)
+
+        g.add_node(dn3, bipartite=1)
+        g.add_edge(dn3, sn1)
+
+        #g.add_edge(
+        #    sn12,
+        #    dn2,
+        #    computers=frozenset({a3_from_a2})
+        #)
+        #g.add_edge(
+        #    sn13,
+        #    dn3,
+        #    computers=frozenset({b1_from_b0})
+        #)
+
+        fig = plt.figure(figsize=(10, 30))
+        ax1 = fig.add_subplot(3, 1, 1)
+        ax2 = fig.add_subplot(3, 1, 2)
+        ax3 = fig.add_subplot(3, 1, 3)
+        draw_FastGraph_matplotlib(
+            ax1,
+            g,
+        )
+        G,new_set = add_combi_arg_set_graph(
+            g,
+            dn1,
+            frozenset({a3_from_a2,b1_from_b0})
+        )
+        draw_FastGraph_matplotlib(
+            ax2,
+            G,
+        )
+        G_ref=deepcopy(g)
+        G_ref.add_node(sn11, bipartite=0)
+        G_ref.add_edge(
+            sn11,
+            dn1,
+            computer_sets=frozenset({
+                frozenset({a3_from_a2, b1_from_b0})
+            })
+        )
+        draw_FastGraph_matplotlib(
+            ax3,
+            G_ref,
+        )
+        fig.savefig("figure.pdf")
+   

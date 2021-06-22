@@ -53,8 +53,11 @@ def module_mvar_aliases(cmod):
     })
 
 def merge_dicts(d1, d2):
-    print(type(d1))
-    print(type(d2))
     e = copy(dict(d1))
     e.update(d2)
     return frozendict(e)
+
+def merge_sets(s1, s2):
+    s = copy(set(s1))
+    s.union(s2)
+    return frozenset(s)
