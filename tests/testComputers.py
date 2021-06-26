@@ -194,8 +194,11 @@ def a1_from_a0(a0: A0) -> A1:
 def a2_from_a1(a1: A1) -> A2:
     return A2()
 
-
 def a3_from_a2(a2: A2) -> A3:
+    return A3()
+
+
+def a3_from_b0(b0: B0) -> A3:
     return A3()
 
 
@@ -210,6 +213,9 @@ def b_minus_1_from_b_minus_2(x: B_minus_2) -> B_minus_1:
 def b0_from_b_minus_1(x: B_minus_1) -> B0:
     return B0()
 
+
+def b1_from_a2(a2: A2) -> B1:
+    return B1()
 
 def b1_from_b0(b0: B0) -> B1:
     return B1()

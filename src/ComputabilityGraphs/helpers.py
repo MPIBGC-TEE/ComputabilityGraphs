@@ -4,7 +4,7 @@ from functools import _lru_cache_wrapper
 import inspect
 #from . import computers as cmod
 from . import non_graph_helpers as ngh
-from copy import copy
+from copy import copy, deepcopy
 
 def list_mult(ll):
     # tensor product of list....
@@ -56,8 +56,3 @@ def merge_dicts(d1, d2):
     e = copy(dict(d1))
     e.update(d2)
     return frozendict(e)
-
-def merge_sets(s1, s2):
-    s = copy(set(s1))
-    s.union(s2)
-    return frozenset(s)
