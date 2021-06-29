@@ -6,7 +6,7 @@ import inspect
 from inspect import signature
 from string import ascii_lowercase, ascii_uppercase
 from typing import FrozenSet, Set, Callable, Tuple, List, Any
-from .TypeSynonyms import Node, Decomp, ComputerSet 
+from .TypeSynonyms import Node, Decomp, Computer, ComputerSet
 
 def all_computer_combis_for_mvar_set(
     var_set: FrozenSet[type],
@@ -52,7 +52,7 @@ def module_computers(cmod):
         [
             getattr(cmod, c)
             for c in cmod.__dir__()
-            if pred(getattr(cmod, c)) 
+            if pred(getattr(cmod, c))
         ]
     )
 
@@ -80,8 +80,8 @@ def merge_dicts(d1, d2):
 
 @lru_cache(maxsize=None)
 def computable_mvars(
-    allComputers: Set[Callable], available_mvars: Set[type]
-) -> Set[type]:
+    allComputers: FrozenSet[Callable], available_mvars: FrozenSet[type]
+) -> FrozenSet[type]:
     # fixme mm:
     # if possible replace by the new graph based method
     # We can already compute the graph. We only have to do it once and can easyly infer the union
@@ -100,24 +100,28 @@ def computable_mvars(
 
 @lru_cache(maxsize=None)
 def directly_computable_mvars(
-    allComputers: Set[Callable], available_mvars: Set[type]
-) -> Set[type]:
+    allComputers: FrozenSet[Callable], available_mvars: FrozenSet[type]
+) -> FrozenSet[type]:
     # find the computers that have a source_set contained in the available_set
     return frozenset(
-        [output_mvar(c) for c in applicable_computers(allComputers, available_mvars)]
+        [
+            output_mvar(c)
+            for c in applicable_computers(allComputers, available_mvars)
+        ]
     )
 
 
 @lru_cache(maxsize=None)
 def applicable_computers(
-    allComputers: Set[Callable],
-    available_mvars: Set[type]
+    allComputers: FrozenSet[Callable],
+    available_mvars: FrozenSet[type]
 ) -> FrozenSet[Callable]:
     return frozenset(
             [
-                c for c in allComputers 
+                c for c in allComputers
                 if input_mvars(c).issubset(available_mvars)
             ])
+
 
 @lru_cache(maxsize=None)
 def all_computers_for_mvar(
@@ -127,20 +131,29 @@ def all_computers_for_mvar(
     return frozenset([c for c in allComputers if output_mvar(c) == mvar])
 
 
-def arg_set(computer: Callable) -> Set[type]:
+def arg_set(computer: Callable) -> FrozenSet[type]:
     params = signature(computer).parameters.values()
     return frozenset({param.annotation for param in params})
 
 
+def combi_arg_set(
+        combi: FrozenSet[Computer]
+        ) -> FrozenSet[type]:
+    def f(acc, el):
+        return frozenset.union(acc, arg_set(el))
+
+    return reduce(f,combi,frozenset())
+
+
 @lru_cache(maxsize=None)
-def arg_set_set(mvar: type, allComputers: Set[Callable]) -> Set[Set[type]]:
+def arg_set_set(mvar: type, allComputers: FrozenSet[Callable]) -> FrozenSet[Set[type]]:
     # return the set of arg_name_sets for all computers that
     # return this mvar
     return frozenset([arg_set(c) for c in all_computers_for_mvar(mvar, allComputers)])
 
 
 @lru_cache(maxsize=None)
-def all_mvars(all_computers: Set[Callable]) -> Set[type]:
+def all_mvars(all_computers: FrozenSet[Callable]) -> FrozenSet[type]:
     # the set of all mvars is implicitly defined by the
     # parameterlists and return values of the computers
     return reduce(
@@ -160,10 +173,28 @@ def pretty_name(mvar: type, aliases: frozendict = frozendict({})) -> str:
 
 
 # synonym for arg_set
-def input_mvars(computer: Callable) -> Set[type]:
+def input_mvars(computer: Callable) -> FrozenSet[type]:
     params = signature(computer).parameters.values()
     return frozenset({param.annotation for param in params})
 
 
 def output_mvar(computer: Callable) -> type:
     return signature(computer).return_annotation
+
+
+def remove_supersets(ss: FrozenSet[FrozenSet])->FrozenSet[FrozenSet]:
+    sl = sorted(list(ss), key=len)  # smallest sets first
+    checked,to_do = remove_supersets_from_sorted_list([],sl)
+    return frozenset(checked)
+
+def remove_supersets_from_sorted_list(
+        checked: List[FrozenSet],
+        to_do: List[FrozenSet]
+) -> List[FrozenSet]:
+    if len(to_do) == 0 :
+        return (checked,[])
+    else:
+        fst = to_do[0]
+        rest = list(filter(lambda s : not(s.issuperset(fst)),to_do[1:]))
+        return remove_supersets_from_sorted_list(checked + [fst], rest)
+

@@ -9,29 +9,8 @@ from copy import deepcopy
 from frozendict import frozendict
 from testinfrastructure.helpers import pp, pe
 
-from .helpers import (
-    # computable_mvars
-    # ,directly_computable_mvars
-    # input_mvars
-    # ,output_mvar
-    # ,
-    arg_set
-    # ,arg_set_set
-    # ,
-    # all_mvars
-    # ,applicable_computers
-    ,
-    all_computers_for_mvar,
-    # pretty_name,
-)
-
-from .TypeSynonyms import Node, Decomp, Computer, ComputerSet 
-# Type synonyms
-#Node = FrozenSet[type]
-#Decomp = Tuple[Node]
-#Computer = Callable[[Tuple[type]], type]
-#ComputerSet = FrozenSet[Computer]
-
+from .TypeSynonyms import Node, Decomp, Computer, ComputerSet
+from . import helpers as h
 
 def add_Node(
         g: nx.DiGraph,
@@ -42,12 +21,6 @@ def add_Node(
     G.add_node(s, bipartite=0)
     return G
 
-def all_computer_combis_for_node(
-    node: Node,
-    all_computers, ComputerSet
-) -> FrozenSet[ComputerSet]:
-    mcs = map(all_computers_for_mvar,node) 
-    
 
 def add_combi_arg_set_graph(
         g: nx.DiGraph,
@@ -57,7 +30,7 @@ def add_combi_arg_set_graph(
     nx.DiGraph,
     FrozenSet[Node]
 ]:
-    args = reduce(frozenset.union,[arg_set(computer) for computer in computer_combi],frozenset())
+    args = reduce(frozenset.union,[h.arg_set(computer) for computer in computer_combi],frozenset())
     e = (args, decomp)
     # A situation arising from combis like {a(c),b(d)} and {b(c),a(d)}
     G = deepcopy(g)
@@ -90,22 +63,51 @@ def add_combis_arg_set_graphs_to_decomp(
 
     return reduce(f, computer_combis, (g, frozenset()))
 
-def add_arg_set_graphs_to_decomp(
+
+def add_all_arg_set_graphs_to_decomp(
         g: nx.DiGraph,
         decomp: Decomp,
+        all_computers
 ) -> Tuple[
     nx.DiGraph,
     FrozenSet[Node]
 ]:
     active, passive = decomp
-    all_computer_combies(active,all_computers)
-    return all_combis_arg_set_graphs_to_decomp(
+    all_combies = h.all_computer_combis_for_mvar_set(active,all_computers)
+    # we want to add only nodes that are not supersets of other nodes (we are
+    # interested in a SPARSE graph) but if a computercombi creates a new egde
+    # to an EXISTING node we want to add the edge and therefore have to include
+    # the combi in the call to add_combis_arg_set_graphs_to_decomp
+
+    def src2node(ss):
+        return frozenset.union(ss, passive)
+
+    src_sets = frozenset(map(h.combi_arg_set, all_combies))
+    src_sets_wo_ss = h.remove_supersets(src_sets)
+    src_nodes_wo_ss = frozenset(map(src2node, src_sets_wo_ss))
+    super_sets = frozenset.difference(src_sets, src_sets_wo_ss)
+    super_set_nodes = frozenset(map(src2node, super_sets))
+    superset_nodes_alredy_in_g = frozenset.intersection(
+        frozenset(g),
+        super_set_nodes
+    )
+    relevant_nodes = frozenset.union(
+        superset_nodes_alredy_in_g,
+        src_nodes_wo_ss
+    )
+    relevant_combis = frozenset(
+        filter(
+            lambda combi: h.combi_arg_set(combi) in relevant_nodes,
+            all_combies
+        )
+    )
+
+    return add_combis_arg_set_graphs_to_decomp(
                 g,
                 decomp,
-                all_computer_combies
+                relevant_combis
             )
 
-       
 
 def add_arg_set_graphs_to_decomps(
         g: nx.DiGraph,

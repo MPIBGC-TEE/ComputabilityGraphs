@@ -10,7 +10,8 @@ from unittest import skip
 from copy import copy, deepcopy
 from ComputabilityGraphs.fast_graph_helpers import (
         add_combi_arg_set_graph,
-        add_combis_arg_set_graphs_to_decomp
+        add_combis_arg_set_graphs_to_decomp,
+        add_all_arg_set_graphs_to_decomp
 )
 from ComputabilityGraphs.graph_helpers import (
 #    arg_set_graph,
@@ -37,10 +38,12 @@ from ComputabilityGraphs.graph_plotting import (
     draw_ComputerSetMultiDiGraph_matplotlib
 )
 import ComputabilityGraphs.helpers as h
-#
-from testComputers import  A, A1, A2, A3, A0, A_minus_1, A_minus_2, B, B1, B2, B3, B0, B_minus_1, B_minus_2, C, D, E, F, G, H, I, X, Y
+
+from testComputers import (
+        A, A1, A2, A3, A0, A_minus_1, A_minus_2, B,
+        B1, B2, B3, B0, B_minus_1, B_minus_2, C, D, E, F, G, H, I, X, Y)
 from testComputers import computers
-from testComputers import ( 
+from testComputers import (
     a_from_x,
     b_from_y,
     a_from_y,
@@ -70,26 +73,8 @@ class TestFastGraphs(InDirTest):
     def setUp(self):
         self.computers = computers
 
-    def test_all_computer_combis_for_mvar_set(self):
-        computers = frozenset([
-            a3_from_a2,
-            a3_from_b0,
-            b1_from_b0,
-            b1_from_a2])
-        var_set=frozenset({A3,B1})
-        self.assertEqual(
-            h.all_computer_combis_for_mvar_set(var_set,computers),
-            frozenset({
-                frozenset({a3_from_a2, b1_from_b0}),
-                frozenset({a3_from_a2, b1_from_a2}),
-                frozenset({a3_from_b0, b1_from_a2}),
-                frozenset({a3_from_b0, b1_from_b0})
-                })
-        )
-
-
     def test_project(self):
-        # project the bipartite graph consisting of 
+        # project the bipartite graph consisting of
         # two kinds of nodes (sets and decompositions)
         # to the graph we actually need which has only sets
 
@@ -148,12 +133,12 @@ class TestFastGraphs(InDirTest):
             ax1,
             g,
         )
-        (sets,partitions) = bipartite.sets(g) 
+        (sets, partitions) = bipartite.sets(g)
         # or alternatively
         top_nodes = {n for n, d in g.nodes(data=True) if d["bipartite"] == 0}
 
         bottom_nodes = set(g) - top_nodes
-        #g_new = replaceNode(src=A2,repl=
+        #g_new = replaceNode(src=A2, repl=
         G = bipartite.projected_graph(g, top_nodes)
 
         draw_ComputerSetMultiDiGraph_matplotlib(
@@ -186,10 +171,10 @@ class TestFastGraphs(InDirTest):
             ax1,
             g,
         )
-        G,new_set = add_combi_arg_set_graph(
+        G, new_set = add_combi_arg_set_graph(
             g,
             dn1,
-            frozenset({a3_from_a2,b1_from_b0})
+            frozenset({a3_from_a2, b1_from_b0})
         )
         draw_FastGraph_matplotlib(
             ax2,
@@ -209,10 +194,10 @@ class TestFastGraphs(InDirTest):
             G_ref,
         )
         fig.savefig("figure.pdf")
-        G,new_set = add_combi_arg_set_graph(
+        G, new_set = add_combi_arg_set_graph(
             g,
             dn1,
-            frozenset({a3_from_a2,b1_from_b0})
+            frozenset({a3_from_a2, b1_from_b0})
         )
         draw_FastGraph_matplotlib(
             ax2,
@@ -232,8 +217,8 @@ class TestFastGraphs(InDirTest):
             G_ref,
         )
         fig.savefig("figure.pdf")
-        self.assertTrue(equivalent_singlegraphs(G,G_ref))
-        self.assertEqual(new_set,frozenset({sn11}))
+        self.assertTrue(equivalent_singlegraphs(G, G_ref))
+        self.assertEqual(new_set, frozenset({sn11}))
 
     def test_add_arg_set_overlapping(self):
         # var set
@@ -259,7 +244,6 @@ class TestFastGraphs(InDirTest):
             })
         )
 
-
         fig = plt.figure(figsize=(10, 30))
         ax1 = fig.add_subplot(3, 1, 1)
         ax2 = fig.add_subplot(3, 1, 2)
@@ -268,22 +252,22 @@ class TestFastGraphs(InDirTest):
             ax1,
             g,
         )
-        G,new_set = add_combi_arg_set_graph(
+        G, new_set = add_combi_arg_set_graph(
             g,
             dn1,
-            frozenset({a3_from_b0,b1_from_a2})
+            frozenset({a3_from_b0, b1_from_a2})
         )
         draw_FastGraph_matplotlib(
             ax2,
             G,
         )
 
-        G_ref=deepcopy(g)
+        G_ref = deepcopy(g)
         G_ref.add_edge(
             sn11,
             dn1,
             computer_sets=frozenset({
-                frozenset({a3_from_b0,b1_from_a2}),
+                frozenset({a3_from_b0, b1_from_a2}),
                 frozenset({a3_from_a2, b1_from_b0})
             })
         )
@@ -292,8 +276,8 @@ class TestFastGraphs(InDirTest):
             G_ref,
         )
         fig.savefig("figure.pdf")
-        self.assertTrue(equivalent_singlegraphs(G,G_ref))
-        self.assertEqual(new_set,frozenset({}))
+        self.assertTrue(equivalent_singlegraphs(G, G_ref))
+        self.assertEqual(new_set, frozenset({}))
 
     def test_add_combis_arg_set_graphs(self):
         # var set
@@ -311,13 +295,6 @@ class TestFastGraphs(InDirTest):
         g.add_edge(dn1, sn1)
 
         g.add_node(sn11, bipartite=0)
-        #g.add_edge(
-        #    sn11,
-        #    dn1,
-        #    computer_sets=frozenset({
-        #        frozenset({a3_from_a2, b1_from_b0})
-        #    })
-        #)
 
 
         fig = plt.figure(figsize=(10, 30))
@@ -328,11 +305,11 @@ class TestFastGraphs(InDirTest):
             ax1,
             g,
         )
-        G,new_set = add_combis_arg_set_graphs_to_decomp(
+        G, new_set = add_combis_arg_set_graphs_to_decomp(
             g,
             dn1,
             frozenset({
-                frozenset({a3_from_b0,b1_from_a2}),
+                frozenset({a3_from_b0, b1_from_a2}),
                 frozenset({a3_from_a2, b1_from_b0})
             })
         )
@@ -346,7 +323,7 @@ class TestFastGraphs(InDirTest):
             sn11,
             dn1,
             computer_sets=frozenset({
-                frozenset({a3_from_b0,b1_from_a2}),
+                frozenset({a3_from_b0, b1_from_a2}),
                 frozenset({a3_from_a2, b1_from_b0})
             })
         )
@@ -355,14 +332,102 @@ class TestFastGraphs(InDirTest):
             G_ref,
         )
         fig.savefig("figure.pdf")
-        self.assertTrue(equivalent_singlegraphs(G,G_ref))
-        self.assertEqual(new_set,frozenset({sn11}))
+        self.assertTrue(equivalent_singlegraphs(G, G_ref))
+        self.assertEqual(new_set, frozenset({sn11}))
+
+    def test_all_computer_combis_for_mvar_set(self):
+        computers = frozenset([
+            a3_from_a2,
+            a3_from_b0,
+            b1_from_b0,
+            b1_from_a2])
+        var_set = frozenset({A3, B1})
+        self.assertEqual(
+            h.all_computer_combis_for_mvar_set(var_set, computers),
+            frozenset({
+                frozenset({a3_from_a2, b1_from_b0}),
+                frozenset({a3_from_a2, b1_from_a2}),
+                frozenset({a3_from_b0, b1_from_a2}),
+                frozenset({a3_from_b0, b1_from_b0})
+                })
+        )
+
+    def test_add_all_arg_set_graphs_to_decomp(self):
+        # var set
+        sn1 = frozenset([A3, B1])
+        sn11 = frozenset([A2, B0])
+        sn12 = frozenset([A2])
+        sn13 = frozenset([B0])
+        # decomposition
+        dn1 = (
+            frozenset([A3, B1]),    # active
+            frozenset([])           # passive
+        )
+        g = nx.DiGraph()
+        g.add_node(sn1, bipartite=0)
+
+        g.add_node(dn1, bipartite=1)
+        g.add_edge(dn1, sn1)
+
+        #g.add_node(sn11, bipartite=0)
+
+
+        fig = plt.figure(figsize=(10, 30))
+        ax1 = fig.add_subplot(3, 1, 1)
+        ax2 = fig.add_subplot(3, 1, 2)
+        ax3 = fig.add_subplot(3, 1, 3)
+        draw_FastGraph_matplotlib(
+            ax1,
+            g,
+        )
+        computers = frozenset([
+            a3_from_a2,
+            a3_from_b0,
+            b1_from_b0,
+            b1_from_a2])
+        g_res, new_set = add_all_arg_set_graphs_to_decomp(
+            g,
+            dn1,
+            computers
+        )
+        draw_FastGraph_matplotlib(
+            ax2,
+            g_res,
+        )
+
+        G_ref=deepcopy(g)
+        G_ref.add_node(sn12, bipartite=0)
+        G_ref.add_node(sn13, bipartite=0)
+        G_ref.add_edge(
+            sn12,
+            dn1,
+            computer_sets=frozenset({
+                frozenset({a3_from_a2, b1_from_a2})
+            })
+        )
+        G_ref.add_edge(
+            sn13,
+            dn1,
+            computer_sets=frozenset({
+                frozenset({a3_from_b0, b1_from_b0}),
+            })
+        )
+        draw_FastGraph_matplotlib(
+            ax3,
+            G_ref,
+        )
+        fig.savefig("figure.pdf")
+        self.assertTrue(equivalent_singlegraphs(g_res, G_ref))
+        self.assertEqual(
+                new_set,
+                frozenset({
+                    sn12,
+                    sn13
+                })
+        )
 
     @skip("not complete yet")
-    def test_add_decomposition_arg_set_graphs(self):
-        # project the bipartite graph consisting of 
-        # two kinds of nodes (sets and decompositions)
-        # to the graph we actually need which has only sets
+    def test_add_decompositions_arg_set_graphs(self):
 
         # var set
         sn1 = frozenset([A3, B1])
@@ -419,16 +484,16 @@ class TestFastGraphs(InDirTest):
             ax1,
             g,
         )
-        (sets,partitions) = bipartite.sets(g) 
+        (sets, partitions) = bipartite.sets(g)
         # or alternatively
         top_nodes = {n for n, d in g.nodes(data=True) if d["bipartite"] == 0}
 
         bottom_nodes = set(g) - top_nodes
-        #g_new = replaceNode(src=A2,repl=
-        G = bipartite.projected_graph(g, top_nodes)
+        # g_new = replaceNode(src=A2, repl=
+        g_res = bipartite.projected_graph(g, top_nodes)
 
         draw_ComputerSetMultiDiGraph_matplotlib(
             ax2,
-            G
+            g_res
         )
         fig.savefig("figure.pdf")
