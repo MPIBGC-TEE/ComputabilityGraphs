@@ -10,7 +10,7 @@ from unittest import skip
 from copy import copy, deepcopy
 from ComputabilityGraphs.fast_graph_helpers import (
         add_combi_arg_set_graph,
-        add_combis_arg_set_graphs
+        add_combis_arg_set_graphs_to_decomp
 )
 from ComputabilityGraphs.graph_helpers import (
 #    arg_set_graph,
@@ -36,7 +36,7 @@ from ComputabilityGraphs.graph_plotting import (
 #    draw_ComputerSetDiGraph_matplotlib,
     draw_ComputerSetMultiDiGraph_matplotlib
 )
-#from ComputabilityGraphs.non_graph_helpers import arg_set_set, all_mvars
+import ComputabilityGraphs.helpers as h
 #
 from testComputers import  A, A1, A2, A3, A0, A_minus_1, A_minus_2, B, B1, B2, B3, B0, B_minus_1, B_minus_2, C, D, E, F, G, H, I, X, Y
 from testComputers import computers
@@ -69,6 +69,24 @@ from testComputers import (
 class TestFastGraphs(InDirTest):
     def setUp(self):
         self.computers = computers
+
+    def test_all_computer_combis_for_mvar_set(self):
+        computers = frozenset([
+            a3_from_a2,
+            a3_from_b0,
+            b1_from_b0,
+            b1_from_a2])
+        var_set=frozenset({A3,B1})
+        self.assertEqual(
+            h.all_computer_combis_for_mvar_set(var_set,computers),
+            frozenset({
+                frozenset({a3_from_a2, b1_from_b0}),
+                frozenset({a3_from_a2, b1_from_a2}),
+                frozenset({a3_from_b0, b1_from_a2}),
+                frozenset({a3_from_b0, b1_from_b0})
+                })
+        )
+
 
     def test_project(self):
         # project the bipartite graph consisting of 
@@ -310,7 +328,7 @@ class TestFastGraphs(InDirTest):
             ax1,
             g,
         )
-        G,new_set = add_combis_arg_set_graphs(
+        G,new_set = add_combis_arg_set_graphs_to_decomp(
             g,
             dn1,
             frozenset({

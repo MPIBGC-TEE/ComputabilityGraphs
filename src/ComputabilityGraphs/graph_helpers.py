@@ -9,7 +9,7 @@ from copy import deepcopy
 from frozendict import frozendict
 from testinfrastructure.helpers import pp, pe
 
-from .non_graph_helpers import (
+from .helpers import (
     # computable_mvars
     # ,directly_computable_mvars
     input_mvars

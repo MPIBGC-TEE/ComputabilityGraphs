@@ -9,7 +9,7 @@ from ComputabilityGraphs.graph_helpers import (
     update_generator,
     minimal_startnodes_for_node,
 )
-from .non_graph_helpers import (
+from .helpers import (
     pretty_name,
 )
 from .helpers import merge_dicts
