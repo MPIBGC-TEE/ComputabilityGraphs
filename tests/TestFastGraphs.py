@@ -11,8 +11,9 @@ from copy import copy, deepcopy
 from ComputabilityGraphs.fast_graph_helpers import (
         add_combi_arg_set_graph,
         add_combis_arg_set_graphs_to_decomp,
-        add_all_arg_set_graphs_to_decomp
+        add_all_arg_set_graphs_to_decomp,
 )
+import ComputabilityGraphs.fast_graph_helpers as fgh
 from ComputabilityGraphs.graph_helpers import (
 #    arg_set_graph,
 #    initial_sparse_powerset_graph,
@@ -41,37 +42,13 @@ import ComputabilityGraphs.helpers as h
 
 from testComputers import (
         A, A1, A2, A3, A0, A_minus_1, A_minus_2, B,
-        B1, B2, B3, B0, B_minus_1, B_minus_2, C, D, E, F, G, H, I, X, Y)
-from testComputers import computers
-from testComputers import (
-    a_from_x,
-    b_from_y,
-    a_from_y,
-    b_from_x,
-    a_from_z,
-    b_from_z,
-    c_from_b,
-    d_from_b,
-    d_from_g_h,
-    a2_from_a1,
-    a3_from_a2,
-    a3_from_b0,
-    b_minus_1_from_b_minus_2,
-    b0_from_b_minus_1,
-    a_minus_1_from_a_minus_2,
-    a1_from_a0,
-    a0_from_a_minus_1,
-    b1_from_b0,
-    b1_from_a2,
-    b2_from_b1,
-    b3_from_b2,
-    a0_from_b0
-)
-
+        B1, B2, B3, B0, B_minus_1, B_minus_2, C, D, E, F, G, H, I,J, X, Y)
+# from testComputers import computers
+import testComputers as tC
 
 class TestFastGraphs(InDirTest):
     def setUp(self):
-        self.computers = computers
+        self.computers = tC.computers
 
     def test_project(self):
         # project the bipartite graph consisting of
@@ -114,17 +91,17 @@ class TestFastGraphs(InDirTest):
         g.add_edge(
             sn11,
             dn1,
-            computers=frozenset({a3_from_a2, b1_from_b0})
+            computers=frozenset({tC.a3_from_a2, tC.b1_from_b0})
         )
         g.add_edge(
             sn12,
             dn2,
-            computers=frozenset({a3_from_a2})
+            computers=frozenset({tC.a3_from_a2})
         )
         g.add_edge(
             sn13,
             dn3,
-            computers=frozenset({b1_from_b0})
+            computers=frozenset({tC.b1_from_b0})
         )
         fig = plt.figure(figsize=(20, 20))
         ax1 = fig.add_subplot(1, 2, 1)
@@ -174,7 +151,7 @@ class TestFastGraphs(InDirTest):
         G, new_set = add_combi_arg_set_graph(
             g,
             dn1,
-            frozenset({a3_from_a2, b1_from_b0})
+            frozenset({tC.a3_from_a2, tC.b1_from_b0})
         )
         draw_FastGraph_matplotlib(
             ax2,
@@ -186,7 +163,7 @@ class TestFastGraphs(InDirTest):
             sn11,
             dn1,
             computer_sets=frozenset({
-                frozenset({a3_from_a2, b1_from_b0})
+                frozenset({tC.a3_from_a2, tC.b1_from_b0})
             })
         )
         draw_FastGraph_matplotlib(
@@ -197,7 +174,7 @@ class TestFastGraphs(InDirTest):
         G, new_set = add_combi_arg_set_graph(
             g,
             dn1,
-            frozenset({a3_from_a2, b1_from_b0})
+            frozenset({tC.a3_from_a2, tC.b1_from_b0})
         )
         draw_FastGraph_matplotlib(
             ax2,
@@ -209,7 +186,7 @@ class TestFastGraphs(InDirTest):
             sn11,
             dn1,
             computer_sets=frozenset({
-                frozenset({a3_from_a2, b1_from_b0})
+                frozenset({tC.a3_from_a2, tC.b1_from_b0})
             })
         )
         draw_FastGraph_matplotlib(
@@ -240,7 +217,7 @@ class TestFastGraphs(InDirTest):
             sn11,
             dn1,
             computer_sets=frozenset({
-                frozenset({a3_from_a2, b1_from_b0})
+                frozenset({tC.a3_from_a2, tC.b1_from_b0})
             })
         )
 
@@ -255,7 +232,7 @@ class TestFastGraphs(InDirTest):
         G, new_set = add_combi_arg_set_graph(
             g,
             dn1,
-            frozenset({a3_from_b0, b1_from_a2})
+            frozenset({tC.a3_from_b0, tC.b1_from_a2})
         )
         draw_FastGraph_matplotlib(
             ax2,
@@ -267,8 +244,8 @@ class TestFastGraphs(InDirTest):
             sn11,
             dn1,
             computer_sets=frozenset({
-                frozenset({a3_from_b0, b1_from_a2}),
-                frozenset({a3_from_a2, b1_from_b0})
+                frozenset({tC.a3_from_b0, tC.b1_from_a2}),
+                frozenset({tC.a3_from_a2, tC.b1_from_b0})
             })
         )
         draw_FastGraph_matplotlib(
@@ -309,8 +286,8 @@ class TestFastGraphs(InDirTest):
             g,
             dn1,
             frozenset({
-                frozenset({a3_from_b0, b1_from_a2}),
-                frozenset({a3_from_a2, b1_from_b0})
+                frozenset({tC.a3_from_b0, tC.b1_from_a2}),
+                frozenset({tC.a3_from_a2, tC.b1_from_b0})
             })
         )
         draw_FastGraph_matplotlib(
@@ -323,8 +300,8 @@ class TestFastGraphs(InDirTest):
             sn11,
             dn1,
             computer_sets=frozenset({
-                frozenset({a3_from_b0, b1_from_a2}),
-                frozenset({a3_from_a2, b1_from_b0})
+                frozenset({tC.a3_from_b0, tC.b1_from_a2}),
+                frozenset({tC.a3_from_a2, tC.b1_from_b0})
             })
         )
         draw_FastGraph_matplotlib(
@@ -337,18 +314,18 @@ class TestFastGraphs(InDirTest):
 
     def test_all_computer_combis_for_mvar_set(self):
         computers = frozenset([
-            a3_from_a2,
-            a3_from_b0,
-            b1_from_b0,
-            b1_from_a2])
+            tC.a3_from_a2,
+            tC.a3_from_b0,
+            tC.b1_from_b0,
+            tC.b1_from_a2])
         var_set = frozenset({A3, B1})
         self.assertEqual(
             h.all_computer_combis_for_mvar_set(var_set, computers),
             frozenset({
-                frozenset({a3_from_a2, b1_from_b0}),
-                frozenset({a3_from_a2, b1_from_a2}),
-                frozenset({a3_from_b0, b1_from_a2}),
-                frozenset({a3_from_b0, b1_from_b0})
+                frozenset({tC.a3_from_a2, tC.b1_from_b0}),
+                frozenset({tC.a3_from_a2, tC.b1_from_a2}),
+                frozenset({tC.a3_from_b0, tC.b1_from_a2}),
+                frozenset({tC.a3_from_b0, tC.b1_from_b0})
                 })
         )
 
@@ -381,10 +358,10 @@ class TestFastGraphs(InDirTest):
             g,
         )
         computers = frozenset([
-            a3_from_a2,
-            a3_from_b0,
-            b1_from_b0,
-            b1_from_a2])
+            tC.a3_from_a2,
+            tC.a3_from_b0,
+            tC.b1_from_b0,
+            tC.b1_from_a2])
         g_res, new_set = add_all_arg_set_graphs_to_decomp(
             g,
             dn1,
@@ -402,14 +379,14 @@ class TestFastGraphs(InDirTest):
             sn12,
             dn1,
             computer_sets=frozenset({
-                frozenset({a3_from_a2, b1_from_a2})
+                frozenset({tC.a3_from_a2, tC.b1_from_a2})
             })
         )
         G_ref.add_edge(
             sn13,
             dn1,
             computer_sets=frozenset({
-                frozenset({a3_from_b0, b1_from_b0}),
+                frozenset({tC.a3_from_b0, tC.b1_from_b0}),
             })
         )
         draw_FastGraph_matplotlib(
@@ -465,35 +442,115 @@ class TestFastGraphs(InDirTest):
         g.add_edge(
             sn11,
             dn1,
-            computers=frozenset({a3_from_a2, b1_from_b0})
+            computers=frozenset({tC.a3_from_a2, tC.b1_from_b0})
         )
         g.add_edge(
             sn12,
             dn2,
-            computers=frozenset({a3_from_a2})
+            computers=frozenset({tC.a3_from_a2})
         )
         g.add_edge(
             sn13,
             dn3,
-            computers=frozenset({b1_from_b0})
+            computers=frozenset({tC.b1_from_b0})
         )
         fig = plt.figure(figsize=(20, 20))
-        ax1 = fig.add_subplot(1, 2, 1)
-        ax2 = fig.add_subplot(1, 2, 2)
+        ax1 = fig.add_subplot(2, 1, 1)
+        ax2 = fig.add_subplot(2, 1, 2)
         draw_FastGraph_matplotlib(
             ax1,
             g,
         )
-        (sets, partitions) = bipartite.sets(g)
-        # or alternatively
-        top_nodes = {n for n, d in g.nodes(data=True) if d["bipartite"] == 0}
+        fig.savefig("figure.pdf")
 
-        bottom_nodes = set(g) - top_nodes
-        # g_new = replaceNode(src=A2, repl=
-        g_res = bipartite.projected_graph(g, top_nodes)
 
-        draw_ComputerSetMultiDiGraph_matplotlib(
-            ax2,
-            g_res
+class TestFastGraph2(InDirTest):   
+
+    def setUp(self):
+        self.computers = frozenset({
+            tC.a_from_e_f,
+            tC.a_from_g_h,
+            tC.b_from_i_j,
+            tC.j_fro_g,
+            tC.b_from_c_d
+        })
+
+
+    def test_uncomputable(self):
+        computers = self.computers
+        self.assertEqual(
+            h.uncomputable(computers),
+            frozenset({C, C, D, E, F, G, H, I})
+        )
+    
+    def test_plot(self):
+        g = nx.DiGraph()
+        for v in [A, B, C, D, E, F, G, H, I, J]:
+            n = frozenset([v,])
+            g.add_node(n, bipartite=0)
+
+        for v in [A, B, J]:
+            n = frozenset([v,])
+            dn = (
+                    n,
+                    frozenset([])
+            )
+            g.add_node(dn, bipartite=1)
+            g.add_edge(dn, n)
+
+        fig = plt.figure(figsize=(20, 20))
+        ax1 = fig.add_subplot(1, 1, 1)
+        draw_FastGraph_matplotlib(
+            ax1,
+            g,
         )
         fig.savefig("figure.pdf")
+
+  
+    def test_initial_fast_graph(self):
+        computers = self.computers
+        g = nx.DiGraph()
+        for v in [A, B, C, D, E, F, G, H, I, J]:
+            g.add_node(frozenset([v]), bipartite=0)
+
+        for v in [A, B, J]:
+            n = frozenset([v])
+            dn = (n,frozenset([]))
+            g.add_node(dn, bipartite=1)
+            g.add_edge(dn, n)
+
+        res = fgh.initial_fast_graph(computers)
+        fig = plt.figure(figsize=(20, 20))
+        ax1 = fig.add_subplot(2, 1, 1)
+        ax2 = fig.add_subplot(2, 1, 2)
+        draw_FastGraph_matplotlib(
+            ax1,
+            g,
+        )
+        #from IPython import embed; embed()
+        draw_FastGraph_matplotlib(
+            ax2,
+            res,
+        )
+        fig.savefig("figure.pdf")
+
+        self.assertTrue(
+            equivalent_singlegraphs(
+                res,
+                g
+            )
+        )
+
+    def test_fast_graph(self):
+        computers = self.computers
+        # g = fgh.fast_graph(computers)
+        g = nx.DiGraph()
+        for v in [A, B, C, D, E, F, G, H, I, J]:
+            g.add_node(frozenset({v}), bipartite=0)
+
+        for v in [A, B, J]:
+            n = frozenset({v})
+            dn = (n,frozenset([]))
+            g.add_node(dn, bipartite=1)
+            g.add_edge(dn, n)
+

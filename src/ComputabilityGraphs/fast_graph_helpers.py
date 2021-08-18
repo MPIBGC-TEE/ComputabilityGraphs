@@ -21,6 +21,15 @@ def add_Node(
     G.add_node(s, bipartite=0)
     return G
 
+def add_Decomp(
+        g: nx.DiGraph,
+        s: Decomp
+) -> nx.DiGraph:
+
+    G = deepcopy(g)
+    G.add_node(s, bipartite=1)
+    return G
+
 
 def add_combi_arg_set_graph(
         g: nx.DiGraph,
@@ -128,3 +137,24 @@ def add_arg_set_graphs_to_decomps(
 
     return reduce(f, computer_combis, (g, frozenset()))
 
+def fast_graph(cs: ComputerSet) -> nx.DiGraph:    
+    g = initial_fast_graph(cs)
+
+
+def initial_fast_graph(cs: ComputerSet) -> nx.DiGraph:    
+    g = nx.DiGraph()
+    mvs = h.all_mvars(cs)
+    for v in mvs:
+        g = add_Node(g, frozenset([v]))
+
+    computables = frozenset.difference(mvs,  h.uncomputable(cs))
+    #from IPython import embed; embed()
+    
+    for v in computables:
+        n = frozenset([v])
+        dn = (n, frozenset([]))
+        g = add_Decomp(g, dn) 
+        g.add_edge(dn,n)
+
+    return g
+    

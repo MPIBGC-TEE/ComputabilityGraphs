@@ -93,11 +93,11 @@ def draw_FastGraph_matplotlib(
     labels = merge_dicts(set_labels, decomp_labels)
     if pos is None:
         # layout alternatives
-        # pos = nx.spring_layout(spsg)
+        pos = nx.spring_layout(spsg)
         # pos = nx.circular_layout(spsg)
         # pos = nx.spring_layout(spsg, iterations=20)
         # pos = nx.circular_layout(spsg )
-        pos = nx.kamada_kawai_layout(spsg)
+        ##pos = nx.kamada_kawai_layout(spsg) #funny artefacts
         # pos = nx.planar_layout(spsg)
         # pos = nx.random_layout(spsg)
         # pos = nx.shell_layout(spsg)
@@ -124,7 +124,7 @@ def draw_FastGraph_matplotlib(
         pos=pos,
         node_size=1000,
         nodelist=list(top_nodes),
-        node_color='b',
+        node_color='orange',
         alpha=0.8
     )
     nx.draw_networkx_nodes(

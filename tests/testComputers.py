@@ -85,6 +85,10 @@ class I:
     pass
 
 
+class J:
+    pass
+
+
 class X:
     pass
 
@@ -228,6 +232,17 @@ def b2_from_b1(b1: B1) -> B2:
 def b3_from_b2(b2: B2) -> B3:
     return B3()
 
+def a_from_g_h(g:G, h:H) ->A:
+    return A()
+
+def a_from_e_f(e:E, f:F) ->A:
+    return A()
+
+def b_from_i_j(i:I, j:J) ->B:
+    return B()
+
+def j_fro_g(g:G) -> J:
+    return J()
 
 # for easier debugging in ipython
 computers = frozenset(

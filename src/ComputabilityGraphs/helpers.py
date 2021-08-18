@@ -136,6 +136,7 @@ def arg_set(computer: Callable) -> FrozenSet[type]:
     return frozenset({param.annotation for param in params})
 
 
+
 def combi_arg_set(
         combi: FrozenSet[Computer]
         ) -> FrozenSet[type]:
@@ -198,3 +199,7 @@ def remove_supersets_from_sorted_list(
         rest = list(filter(lambda s : not(s.issuperset(fst)),to_do[1:]))
         return remove_supersets_from_sorted_list(checked + [fst], rest)
 
+def uncomputable(cs: ComputerSet) -> FrozenSet[type]:
+    all_res = frozenset([output_mvar(c) for c in cs])
+    all_vars = all_mvars(cs)
+    return frozenset.difference(all_vars,all_res)
