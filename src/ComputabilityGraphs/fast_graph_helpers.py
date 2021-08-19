@@ -39,8 +39,10 @@ def add_combi_arg_set_graph(
     nx.DiGraph,
     FrozenSet[Node]
 ]:
+    _, passive = decomp
     args = reduce(frozenset.union,[h.arg_set(computer) for computer in computer_combi],frozenset())
-    e = (args, decomp)
+    arg_node = frozenset.union(args,passive)
+    e = (arg_node, decomp)
     # A situation arising from combis like {a(c),b(d)} and {b(c),a(d)}
     G = deepcopy(g)
     if G.has_edge(*e):
@@ -49,10 +51,10 @@ def add_combi_arg_set_graph(
         G.get_edge_data(*e)[key] =frozenset.union(data,frozenset({computer_combi}))
         return (G, frozenset())
     else:
-        G = add_Node(g, args)
+        G = add_Node(g, arg_node)
         # if edge does not exist
-        G.add_edge(args, decomp, computer_sets=frozenset([computer_combi]))
-        return (G, frozenset({args}))
+        G.add_edge(arg_node, decomp, computer_sets=frozenset([computer_combi]))
+        return (G, frozenset({arg_node}))
 
 
 def add_combis_arg_set_graphs_to_decomp(
@@ -80,7 +82,8 @@ def add_all_arg_set_graphs_to_decomp(
 ) -> Tuple[
     nx.DiGraph,
     FrozenSet[Node]
-]:
+]:  
+    g_new = deepcopy(g)
     active, passive = decomp
     all_combies = h.all_computer_combis_for_mvar_set(active,all_computers)
     # we want to add only nodes that are not supersets of other nodes (we are
@@ -96,23 +99,24 @@ def add_all_arg_set_graphs_to_decomp(
     src_nodes_wo_ss = frozenset(map(src2node, src_sets_wo_ss))
     super_sets = frozenset.difference(src_sets, src_sets_wo_ss)
     super_set_nodes = frozenset(map(src2node, super_sets))
-    superset_nodes_alredy_in_g = frozenset.intersection(
-        frozenset(g),
+    super_set_nodes_already_in_g = frozenset.intersection(
+        frozenset(g_new),
         super_set_nodes
     )
+
     relevant_nodes = frozenset.union(
-        superset_nodes_alredy_in_g,
+        super_set_nodes_already_in_g,
         src_nodes_wo_ss
     )
     relevant_combis = frozenset(
         filter(
-            lambda combi: h.combi_arg_set(combi) in relevant_nodes,
+            lambda combi: src2node(h.combi_arg_set(combi)) in relevant_nodes,
             all_combies
         )
     )
 
     return add_combis_arg_set_graphs_to_decomp(
-                g,
+                g_new,
                 decomp,
                 relevant_combis
             )
@@ -121,24 +125,62 @@ def add_all_arg_set_graphs_to_decomp(
 def add_arg_set_graphs_to_decomps(
         g: nx.DiGraph,
         decomps: Set[Decomp],
-        allcomputers: FrozenSet[Computer]
+        all_computers: FrozenSet[Computer]
 ) -> Tuple[
     nx.DiGraph,
     FrozenSet[Node]
 ]:
     def f(acc, el):
+        pp('el',locals())
         g, new_nodes = acc
         decomp = el
         active, passive = decomp
-        all_computer_combies(active,all_computers)
-        g_new, add_combis_arg = add_combis_arg_set_graph_to_decomp(g, decomp, computer_combis)
+        g_new, combi_new_nodes = add_all_arg_set_graphs_to_decomp(g, decomp, all_computers)
+        pp('combi_new_nodes',locals())
+
         new_nodes = frozenset.union(new_nodes, combi_new_nodes)
         return(g_new, new_nodes)
 
-    return reduce(f, computer_combis, (g, frozenset()))
+    return reduce(f, decomps, (g, frozenset()))
+
+def add_all_decompositions_to_node(
+        g: nx.DiGraph,
+        node: Node,
+        uncomputable: FrozenSet[type]
+    ) -> Tuple[nx.DiGraph, FrozenSet[Decomp]]:
+    actives = h.power_set(node)
+    decompositions = [
+        (a,frozenset.difference(node,a)) 
+        for a in actives 
+        if len(frozenset.intersection(a, uncomputable)) == 0 
+    ]
+    new_decompositions = frozenset(filter(lambda d: not(g.has_node(d)), decompositions))
+    for d in decompositions:
+        g = add_Decomp(g, d)
+        g.add_edge(d,node)
+
+    return (g, new_decompositions)
 
 def fast_graph(cs: ComputerSet) -> nx.DiGraph:    
-    g = initial_fast_graph(cs)
+    # The iterator has not been implemented yet
+    # this is a manual version
+    g, new_dcs = initial_fast_graph(cs)
+    g_new, arg_set_nodes = add_arg_set_graphs_to_decomps(g ,new_dcs, cs)
+    
+    uncomputable = h.uncomputable(cs)
+    def f(acc, node):
+        g, decompositions = acc
+        g_new, node_decomps = add_all_decompositions_to_node(g, node, uncomputable=uncomputable)
+        new_decompositions = frozenset.union(
+            decompositions,
+            node_decomps
+        )
+        return g_new, new_decompositions
+
+    g_new2, new_dcs2 = reduce(f, arg_set_nodes, (g_new, frozenset()))
+    g_new3, arg_set_nodes = add_arg_set_graphs_to_decomps(g_new2 ,new_dcs2, cs)
+
+    return g_new3
 
 
 def initial_fast_graph(cs: ComputerSet) -> nx.DiGraph:    
@@ -148,13 +190,15 @@ def initial_fast_graph(cs: ComputerSet) -> nx.DiGraph:
         g = add_Node(g, frozenset([v]))
 
     computables = frozenset.difference(mvs,  h.uncomputable(cs))
-    #from IPython import embed; embed()
-    
-    for v in computables:
-        n = frozenset([v])
-        dn = (n, frozenset([]))
+    new_decompositions = frozenset(
+        [
+            (frozenset([v]), frozenset([])) 
+            for v in computables
+        ]
+    )
+    for dn in new_decompositions:
         g = add_Decomp(g, dn) 
-        g.add_edge(dn,n)
+        g.add_edge(dn,dn[0])
 
-    return g
+    return g, new_decompositions 
     

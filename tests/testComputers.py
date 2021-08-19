@@ -113,8 +113,6 @@ def a_from_x(x: X) -> A:
     return A()
 
 
-def b_from_x(x: X) -> B:
-    return B()
 
 
 def a_from_y(y: Y) -> A:
@@ -132,6 +130,8 @@ def a_from_z(z: Z) -> A:
 def b_from_z(z: Z) -> B:
     return B()
 
+def b_from_x(x: X) -> B:
+    return B()
 
 def c_from_z(z: Z) -> C:
     return C()
@@ -139,6 +139,12 @@ def c_from_z(z: Z) -> C:
 
 def a_from_i(i: I) -> A:
     """Computes a from i"""
+    return A()
+
+def a_from_g_h(g:G, h:H) -> A:
+    return A()
+
+def a_from_e_f(e:E, f:F) -> A:
     return A()
 
 
@@ -151,6 +157,10 @@ def b_from_d_e(d: D, e: E) -> B:
 
 
 def b_from_e_f(e: E, f: F) -> B:
+    return B()
+
+
+def b_from_i_j(i: I, j: J) -> B:
     return B()
 
 
@@ -181,6 +191,9 @@ def e_from_b(b: B) -> E:
 def f_from_b(b: B) -> F:
     """Computes f from b"""
     return F()
+
+def j_from_g(g: G) -> J:
+    return J()
 
 
 def a_minus_1_from_a_minus_2(x: A_minus_2) -> A_minus_1:
@@ -232,17 +245,8 @@ def b2_from_b1(b1: B1) -> B2:
 def b3_from_b2(b2: B2) -> B3:
     return B3()
 
-def a_from_g_h(g:G, h:H) ->A:
-    return A()
-
-def a_from_e_f(e:E, f:F) ->A:
-    return A()
-
-def b_from_i_j(i:I, j:J) ->B:
+def b_from_i_j(i: I, j: J) -> B:
     return B()
-
-def j_fro_g(g:G) -> J:
-    return J()
 
 # for easier debugging in ipython
 computers = frozenset(

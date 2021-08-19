@@ -163,7 +163,6 @@ def all_mvars(all_computers: FrozenSet[Callable]) -> FrozenSet[type]:
         frozenset({}),
     )
 
-
 def pretty_name(mvar: type, aliases: frozendict = frozendict({})) -> str:
     if len(aliases) == 0:
         s = mvar.__name__
@@ -203,3 +202,26 @@ def uncomputable(cs: ComputerSet) -> FrozenSet[type]:
     all_res = frozenset([output_mvar(c) for c in cs])
     all_vars = all_mvars(cs)
     return frozenset.difference(all_vars,all_res)
+
+def sublist_without_pos(s,pos):
+    sl1=slice(0,pos)
+    sl2=slice(pos+1,None)
+    return s[sl1] + s[sl2]
+
+def power_set(s):
+    ls = list(s)
+    if len(ls)==0:
+        l = []
+    else: 
+        l = [[]] + power_list(ls) 
+    return frozenset(map(frozenset,l))
+
+def power_list(s):
+    if len(s)==0:
+        raise
+    if len(s) == 1:
+        return [s]
+    if len(s) >1:
+        sublists = [sublist_without_pos(s,ind) for ind in range(len(s))] 
+        psls = [power_list(sl) for sl in  sublists]
+        return reduce( lambda acc,el:acc + el, psls) + [s]

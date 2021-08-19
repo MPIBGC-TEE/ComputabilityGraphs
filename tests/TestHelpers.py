@@ -126,3 +126,33 @@ class TestHelpers(TestCase):
                 frozenset({3, 4})
             ])
         )
+
+    def test_power_list(self):
+        s1 = [1,2]
+        power_list1 = [[2],[1],[1,2]]
+        self.assertEqual(power_list1, h.power_list(s1))
+        
+        s2=[1,2,3]
+        psl2 = [[3],[2],[2,3]] + [[3],[1],[1,3]] + [[2],[1],[1,2]] + [s2] 
+        self.assertEqual(psl2, h.power_list(s2))
+    
+    def test_power_set(self):
+        s1 = frozenset([1,2])
+        power_set_1 = frozenset(
+            [
+                frozenset([]),
+                frozenset([2]),
+                frozenset([1]),
+                frozenset([1,2])
+            ]
+        )
+        self.assertEqual(power_set_1, h.power_set(s1))
+        
+        s2=frozenset([1,2,3])
+        psl2 = frozenset(
+            [
+                frozenset(l) 
+                for l in [[],[3],[2],[2,3],[3],[1],[1,3],[2],[1],[1,2],s2] 
+            ]
+        )
+        self.assertEqual(psl2, h.power_set(s2))
