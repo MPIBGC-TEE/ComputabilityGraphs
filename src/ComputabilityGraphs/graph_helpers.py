@@ -233,7 +233,10 @@ def sparse_powerset_graph_2(computers: Set[Callable]) -> nx.MultiDiGraph:
     return new
 
 
-def update_generator(computers: Set[Callable], max_it: int) -> List[nx.MultiDiGraph]:
+def update_generator(
+        computers: Set[Callable],
+        max_it: int
+    ) -> 'iterator':
 
     if max_it < 0:
         raise IndexError("update sequence indices have to be larger than 0")
