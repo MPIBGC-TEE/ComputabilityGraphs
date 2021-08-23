@@ -14,8 +14,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        repository: MPIBGC-TEE/ComputabilityGraphs
-        token: ${{ secrets.ACCESS_TOKEN }}
+        #repository: MPIBGC-TEE/ComputabilityGraphs
+        #token: ${{ secrets.ACCESS_TOKEN }}
         #- uses: textbook/git-checkout-submodule-action@master
     - name: Set up conda 
       uses: s-weigand/setup-conda@v1
