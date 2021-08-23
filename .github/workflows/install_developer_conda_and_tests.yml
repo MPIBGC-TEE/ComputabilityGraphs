@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-      with:
+      #with:
         #repository: MPIBGC-TEE/ComputabilityGraphs
         #token: ${{ secrets.ACCESS_TOKEN }}
         #- uses: textbook/git-checkout-submodule-action@master
