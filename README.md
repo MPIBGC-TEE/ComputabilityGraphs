@@ -1,6 +1,4 @@
-
-![test_debian_pip_install](https://github.com/MPIBGC-TEE/bgc_md2/workflows/test_debian_pip_install/badge.svg)
-![test_conda_developer_installation](https://github.com/MPIBGC-TEE/bgc_md2/workflows/test_conda_developer_installation/badge.svg)
+![test_conda_developer_installation](https://github.com/MPIBGC-TEE/ComputabilityGraphs/workflows/test_conda_developer_installation/badge.svg)
 ## Installation
 
    * Update conda
