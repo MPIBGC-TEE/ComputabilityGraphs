@@ -32,7 +32,7 @@ jobs:
         sudo chmod -R 777 . 
         ./install_developer_conda.sh
         conda install pip
-        pip install pip install git+git://github.com/MPIBGC-TEE/testinfrastructure.git
+        pip install git+git://github.com/MPIBGC-TEE/testinfrastructure.git
 
     - name: Test with unittest
       run: |
