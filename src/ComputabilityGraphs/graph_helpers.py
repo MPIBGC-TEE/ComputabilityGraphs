@@ -222,15 +222,6 @@ def sparse_powerset_graph(computers: Set[Callable]) -> nx.MultiDiGraph:
         # print(equivalent_multigraphs(old, new))
     return new
 
-@lru_cache
-def sparse_powerset_graph_2(computers: Set[Callable]) -> nx.MultiDiGraph:
-    old_g,next_nodes = initial_sparse_powerset_graph_2(computers)
-    new = update_step(old, computers)
-    while not (equivalent_multigraphs(old, new)):
-        old = deepcopy(new)
-        new = update_step(old, computers)
-        # print(equivalent_multigraphs(old, new))
-    return new
 
 
 def update_generator(

@@ -13,24 +13,64 @@ from .TypeSynonyms import Node, Decomp, Computer, ComputerSet
 from . import helpers as h
 from .FastGraph import  FastGraph
 
-#def add_Node(
-#        g: nx.DiGraph,
-#        s: Node
-#) -> nx.DiGraph:
-#
-#    G = deepcopy(g)
-#    G.add_node(s, bipartite=0)
-#    return G
-#
-#def add_Decomp(
-#        g: nx.DiGraph,
-#        s: Decomp
-#) -> nx.DiGraph:
-#
-#    G = deepcopy(g)
-#    G.add_node(s, bipartite=1)
-#    return G
+def src_node_computersets_tuples_from_decomp(
+        g: FastGraph,
+        d: Decomp
+    )->FrozenSet[Tuple[Node,ComputerSet]]:
+    # This functions is necessary for the projection of the FastGraph
+    # to the MultiDiGraphs containing no Decomps but only nodes but
+    # preserving the information contained in the edges
+    # it collects all the src nodes and computersets of one decompositon
+    def f(acc,e):
+        src,_ = e
+        css = g.get_edge_data(src,d)['computer_sets'] 
+        tup =(src,css)
+        return acc+[(src,css)]
 
+    l = reduce(f,g.in_edges(d),[])
+    return frozenset(l) 
+
+def src_node_computersets_tuples_from_node(
+        g: FastGraph,
+        n: Node
+    )->FrozenSet[Tuple[Node,ComputerSet]]:
+    # This functions is necessary for the projection of the FastGraph
+    # to the MultiDiGraphs containing no Decomps but only nodes but
+    # preserving the information contained in the edges
+    # It collects all the src nodes and computersets of a node, collecting
+    # them for all decompositions of this node
+    def f(acc,e):
+        src,_ = e
+        ld= list(src_node_computersets_tuples_from_decomp(g,src))
+        return acc+ld
+
+    l = reduce(f,g.in_edges(n),[])
+    return frozenset(l) 
+
+
+def project_to_multiDiGraph(fg):
+    ns = fg.get_Nodes()
+    g=nx.MultiDiGraph()
+    g.add_nodes_from(ns)
+
+
+    def f(g,n):
+        gf = deepcopy(g)
+        tups = src_node_computersets_tuples_from_node(fg,n)
+        def h(g,tup):
+            src, computersets = tup
+            gh=deepcopy(g)
+            def j(g,cs):
+                gj=deepcopy(g)
+                gj.add_edge(src,n,computers=cs)
+                return gj
+
+            return reduce(j,computersets,gh)
+
+        return reduce(h,tups,gf)
+
+
+    return reduce(f,ns,g)
 
 def add_combi_arg_set_graph(
         g: FastGraph,
@@ -186,7 +226,7 @@ def add_all_decompositions_to_all_nodes(
     return g_res, all_new_decompositions
 
 
-def fast_graph(cs: ComputerSet) -> FastGraph:    
+def fast_graph_old(cs: ComputerSet) -> FastGraph:    
     # The iterator has not been implemented yet
     # this is a manual version
     uncomputable = h.uncomputable(cs)
@@ -201,7 +241,12 @@ def fast_graph(cs: ComputerSet) -> FastGraph:
 
     return g_new3
 
+def fast_graph(cs: ComputerSet) -> FastGraph:    
+    g,new_nodes = last(update_generator(cs,max_it=20))
+    return g
 
+def last(iterator):
+    return reduce(lambda acc,el:el,iterator)
 
 def update_generator(
         cs: ComputerSet,
@@ -286,4 +331,6 @@ def draw_update_sequence(
         )
     
 
-
+def sparse_powerset_graph(computers):
+    fg = fast_graph(computers)
+    return project_to_multiDiGraph(fg)

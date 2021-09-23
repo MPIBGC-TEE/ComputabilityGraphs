@@ -1,6 +1,8 @@
+from typing import FrozenSet
 from ComputabilityGraphs.graph_helpers import equivalent_singlegraphs
 import networkx as nx
 from frozendict import frozendict
+from functools import reduce
 from .TypeSynonyms import Node, Decomp, Computer, ComputerSet
 from .helpers import merge_dicts
 from .graph_plotting import varset_2_string, varsettuple_2_string, compset_2_string
@@ -25,6 +27,39 @@ class FastGraph:
 
     def get_Decomps(self):
         return frozenset({n for n, d in self.dg.nodes(data=True) if d["bipartite"] == 1})
+
+   # def src_nodes_computerset_tuples(
+   #         self,
+   #         n: Node 
+   #     )->FrozenSet[Tuple[Node,ComputerSet]]
+   #     """Return set of tuples 
+   #     Since FastGraph is internally bibartite, vvery node has 
+   #     a the direct predecessors of a node are decompositions.
+   #     Every decomposition has a node as predecessor to which
+   #     s1 = frozenset([tC.A])
+   #     s2 = frozenset([tC.B])
+   #     n = frozenset.union(s1,s2)
+   #     d = (s1,s2) 
+   #     g.add_Node(n)
+   #     g.add_Decomp(targetNode=n,decomp=d)
+   #     it is connected via a set of computersets.
+   #     This function returns the src nodes along wiht the 
+   #     computersets leading to the target_node (via the 
+   #     decompositions). The function is needed for the projection
+   #     of the bipartite graph onto the directed multigraph that
+   #     consists only of Nodes."""
+   #         
+   #     def f(acc,el):
+   #         decomp,_ = el
+   # 
+   #         computersets = reduce(get_computersets_from_decomp, decomps)
+   #          
+   #     tuples = reduce(
+   #         f,
+   #         self.dg.in_edges()
+   #     )
+    def in_edges(self,*args,**kwargs):
+        return self.dg.in_edges(*args,**kwargs)
 
     def get_edge_data(self,*args,**kwargs):
         return self.dg.get_edge_data(*args,**kwargs)
@@ -162,3 +197,4 @@ class FastGraph:
             ax.text(0, 0 - i / len(mvar_aliases), k + ": " + mvar_aliases_inv[k])
     
         
+
