@@ -225,3 +225,51 @@ def power_list(s):
         sublists = [sublist_without_pos(s,ind) for ind in range(len(s))] 
         psls = [power_list(sl) for sl in  sublists]
         return reduce( lambda acc,el:acc + el, psls) + [s]
+
+###################################################
+# common graph helpers
+
+import networkx as nx
+def equivalent_singlegraphs(g1_single: nx.DiGraph, g2_single: nx.DiGraph) -> bool:
+    return all(
+        [
+            g1_single.get_edge_data(*e) == g2_single.get_edge_data(*e)
+            for e in g1_single.edges()
+        ]
+        + [
+            g1_single.get_edge_data(*e) == g2_single.get_edge_data(*e)
+            for e in g2_single.edges()
+        ]
+    ) & (g1_single.nodes() == g2_single.nodes())
+
+def node_2_string(node, aliases=frozendict({})):
+    return "{" + ",".join([pretty_name(v, aliases) for v in node]) + "}"
+
+def varset_2_string(node, aliases=frozendict({})):
+    return "{" + ",".join([pretty_name(v, aliases) for v in node]) + "}"
+
+def varsettuple_2_string(node_tuple, aliases=frozendict({})):
+    active,passive = node_tuple 
+    res = "{" + ",".join([pretty_name(v, aliases) for v in active]) + "}" \
+            + "{" + ",".join([pretty_name(v, aliases) for v in passive]) + "}"
+    return res    
+
+
+def nodes_2_string(nodes, aliases=frozendict({})):
+    return "[ " + ",".join([node_2_string(n, aliases) for n in nodes]) + " ]"
+
+def decompositions_2_string(
+        decompositions, 
+        aliases=frozendict({})
+    ):
+    return "{ " + ",".join(
+        [varsettuple_2_string(d) for d in decompositions]
+    ) + "}"
+
+def compset_2_string(compset, aliases=frozendict({})):
+    return "{" + ",".join([pretty_name(c, aliases) for c in compset]) + "}"
+
+
+def edge_2_string(e):
+    return "(" + node_2_string(e[0]) + "," + node_2_string(e[1]) + ")"
+

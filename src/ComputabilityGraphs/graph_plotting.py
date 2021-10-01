@@ -6,35 +6,16 @@ import networkx as nx
 import numpy as np
 
 import ComputabilityGraphs.graph_helpers as gh
+import ComputabilityGraphs.fast_graph_helpers as fgh
 from .helpers import (
     pretty_name,
-    merge_dicts
+    merge_dicts,
+    node_2_string,
+    nodes_2_string,
+    varset_2_string,
+    varsettuple_2_string,
+    compset_2_string
 )
-
-
-def compset_2_string(compset, aliases=frozendict({})):
-    return "{" + ",".join([pretty_name(c, aliases) for c in compset]) + "}"
-
-
-def node_2_string(node, aliases=frozendict({})):
-    return "{" + ",".join([pretty_name(v, aliases) for v in node]) + "}"
-
-def varset_2_string(node, aliases=frozendict({})):
-    return "{" + ",".join([pretty_name(v, aliases) for v in node]) + "}"
-
-def varsettuple_2_string(node_tuple, aliases=frozendict({})):
-    active,passive = node_tuple 
-    res = "{" + ",".join([pretty_name(v, aliases) for v in active]) + "}" \
-            + "{" + ",".join([pretty_name(v, aliases) for v in passive]) + "}"
-    return res    
-
-
-def nodes_2_string(node, aliases=frozendict({})):
-    return "[ " + ",".join([node_2_string(n, aliases) for n in node]) + " ]"
-
-
-def edge_2_string(e):
-    return "(" + node_2_string(e[0]) + "," + node_2_string(e[1]) + ")"
 
 
 def draw_sequence(fig, tups):
@@ -72,6 +53,7 @@ def draw_update_sequence(
         draw_ComputerSetMultiDiGraph_matplotlib(
             axs[i], lg[i], mvar_aliases, computer_aliases, pos=pos
         )
+
 
 #def draw_FastGraph_matplotlib(
 #    ax,

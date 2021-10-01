@@ -15,23 +15,29 @@ from ComputabilityGraphs.graph_helpers import (
     minimal_startnodes_for_node,
     update_step,
     toDiGraph,
-    equivalent_singlegraphs,
     equivalent_multigraphs,
-    node_2_string,
-    nodes_2_string,
-    edge_2_string,
     product_graph,
     sparse_powerset_graph,
+    fast_sparse_powerset_graph,
     update_generator,
     # draw_multigraph_plotly,
     # draw_Graph_svg,
 )
+import ComputabilityGraphs.fast_graph_helpers as fgh
+
 from ComputabilityGraphs.graph_plotting import (
     draw_update_sequence,
     draw_ComputerSetDiGraph_matplotlib,
     draw_ComputerSetMultiDiGraph_matplotlib,
 )
-from ComputabilityGraphs.helpers import arg_set_set, all_mvars
+from ComputabilityGraphs.helpers import (
+    arg_set_set,
+    all_mvars, 
+    node_2_string,
+    nodes_2_string,
+    edge_2_string,
+    equivalent_singlegraphs,
+)
 
 
 
@@ -39,17 +45,17 @@ from testComputers import  A, A1, A2, A3, A0, A_minus_1, A_minus_2, B, B1, B2, B
 from testComputers import computers
 from testComputers import ( 
     a_from_x,
-	b_from_y,
-	a_from_y,
-	b_from_x,
-	a_from_z,
-	b_from_z,
-	c_from_b,
-	d_from_b,
-	d_from_g_h,
-	a2_from_a1,
-	a3_from_a2,
-	b_minus_1_from_b_minus_2,
+    b_from_y,
+    a_from_y,
+    b_from_x,
+    a_from_z,
+    b_from_z,
+    c_from_b,
+    d_from_b,
+    d_from_g_h,
+    a2_from_a1,
+    a3_from_a2,
+    b_minus_1_from_b_minus_2,
     b0_from_b_minus_1,
     a_minus_1_from_a_minus_2,
     a1_from_a0,
@@ -57,7 +63,15 @@ from testComputers import (
     b1_from_b0,
     b2_from_b1,
     b3_from_b2,
-    a0_from_b0
+    a0_from_b0,
+    a_from_i,
+    b_from_c_d,
+    b_from_e_f,
+    c_from_b,
+    d_from_b,
+    d_from_g_h,
+    e_from_b,
+    f_from_b,
     )
 class TestGraphs(InDirTest):
     def setUp(self):
@@ -217,7 +231,11 @@ class TestGraphs(InDirTest):
         # spsg=sparse_powerset_graph(self.mvars,self.computers)
 
         ################# linear A1->A2->A3
-        spsg = sparse_powerset_graph(frozenset({a2_from_a1, a3_from_a2}))
+        computers = frozenset({a2_from_a1, a3_from_a2})
+        spsg = sparse_powerset_graph(computers)
+        fspsg = fast_sparse_powerset_graph(computers)
+        self.assertTrue(equivalent_multigraphs(spsg,fspsg))
+        
         self.assertSetEqual(
             set(spsg.nodes()), {frozenset({A1}), frozenset({A2}), frozenset({A3})}
         )
@@ -230,25 +248,26 @@ class TestGraphs(InDirTest):
         #                  ||
         #                  \/
         #       A-2->A-1->A0->A1->A2
-        spsg = sparse_powerset_graph(
-            frozenset(
-                {
-                    b_minus_1_from_b_minus_2,
-                    b0_from_b_minus_1,
-                    b1_from_b0,
-                    b2_from_b1,
-                    b3_from_b2,
-                    #
-                    a0_from_b0,
-                    #
-                    a_minus_1_from_a_minus_2,
-                    a0_from_a_minus_1,
-                    a1_from_a0,
-                    a2_from_a1,
-                    a3_from_a2,
-                }
-            )
+        computers = frozenset(
+            {
+                b_minus_1_from_b_minus_2,
+                b0_from_b_minus_1,
+                b1_from_b0,
+                b2_from_b1,
+                b3_from_b2,
+                #
+                a0_from_b0,
+                #
+                a_minus_1_from_a_minus_2,
+                a0_from_a_minus_1,
+                a1_from_a0,
+                a2_from_a1,
+                a3_from_a2,
+            }
         )
+        spsg = sparse_powerset_graph(computers)
+        fspsg = fast_sparse_powerset_graph(computers)
+        self.assertTrue(equivalent_multigraphs(spsg,fspsg))
         self.assertSetEqual(
             set(spsg.nodes()),
             {
@@ -285,13 +304,54 @@ class TestGraphs(InDirTest):
             },
         )
 
+    def test_Markus_graph_creation2(self):
+        #check difference
+        computers = frozenset(
+            [
+                a_from_i,
+                b_from_c_d,
+                #b_from_e_f,
+                c_from_b,
+                #d_from_b,
+                d_from_g_h,
+                #e_from_b,
+                #f_from_b,
+            ]
+        )
+        fig=plt.figure()
+        draw_update_sequence(computers,5,fig)
+        fig.savefig('update.pdf')
+        
+        fig=plt.figure(figsize=(60,60))
+        fgh.draw_update_sequence(computers,25,fig)
+        fig.savefig('fast_update.pdf')
+
+
     def test_minimal_startnodes_for_single_var(self):
+        computers = frozenset(
+            [
+                a_from_i,
+                b_from_c_d,
+                b_from_e_f,
+                c_from_b,
+                d_from_b,
+                d_from_g_h,
+                e_from_b,
+                f_from_b,
+            ]
+        )
         spsg = sparse_powerset_graph(self.computers)
+        fspsg = fast_sparse_powerset_graph(self.computers)
         fig1 = plt.figure(figsize=(15, 15))
-        axs = fig1.subplots(1, 1)
+        axs = fig1.subplots(2, 1)
         draw_ComputerSetMultiDiGraph_matplotlib(
-            axs,
+            axs[0],
             spsg,
+            targetNode=frozenset({B})
+        )
+        draw_ComputerSetMultiDiGraph_matplotlib(
+            axs[1],
+            fspsg,
             targetNode=frozenset({B})
         )
         fig1.savefig("spsg_B.pdf")
@@ -328,6 +388,7 @@ class TestGraphs(InDirTest):
 
     def test_minimal_startnodes_for_node(self):
         spsg = sparse_powerset_graph(self.computers)
+        fspsg = fast_sparse_powerset_graph(self.computers)
         targetVars = frozenset({A, B})
         fig1 = plt.figure(figsize=(15, 30))
         axs = fig1.subplots(2, 1)

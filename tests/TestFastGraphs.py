@@ -20,8 +20,29 @@ from ComputabilityGraphs.FastGraph import FastGraph
 import ComputabilityGraphs.helpers as h
 
 from testComputers import (
-        A, A1, A2, A3, A0, A_minus_1, A_minus_2, B,
-        B1, B2, B3, B0, B_minus_1, B_minus_2, C, D, E, F, G, H, I,J, X, Y)
+    A, A1, A2, A3, A0, A_minus_1, A_minus_2, B,
+    B1, B2, B3, B0, B_minus_1, B_minus_2, C, D, E, F, G, H, I,J, X, Y,
+    a_from_x,
+    b_from_y,
+    a_from_y,
+    b_from_x,
+    a_from_z,
+    b_from_z,
+    c_from_b,
+    d_from_b,
+    d_from_g_h,
+    a2_from_a1,
+    a3_from_a2,
+    b_minus_1_from_b_minus_2,
+    b0_from_b_minus_1,
+    a_minus_1_from_a_minus_2,
+    a1_from_a0,
+    a0_from_a_minus_1,
+    b1_from_b0,
+    b2_from_b1,
+    b3_from_b2,
+    a0_from_b0
+)
 # from testComputers import computers
 import testComputers as tC
 
@@ -337,7 +358,6 @@ class TestFastGraph(InDirTest):
 
         G = fgh.project_to_multiDiGraph(g)
     
-        from IPython import embed;embed()
         draw_ComputerSetMultiDiGraph_matplotlib(
             ax2,
             G
@@ -1076,83 +1096,5 @@ class TestFastGraph2(InDirTest):
         g_res = fgh.fast_graph(computers)
         g_res.draw_matplotlib(ax2)
         fig.savefig("figure.pdf")
-        
-    def test_Markus_graph_creation(self):
-        # Now we build the directed Graph we can use to compute connectivity
-        # the Nodes are sets of Mvars (elemenst of the powerset of all Mvars)
-        # and a connection between two sets indicates computability of the target set from
-        # the source set.
-        # The complete graph would contain all elements of the powerset of allMvars and all
-        # possible connections, which is prohibitively expensive.
-        # Instead we will compute a subgraph where we start with one element sets as targets
-        # and infer the predecessors of those sets and then the predecessors of the predecessors and so on until we do not find new nodes=start_sets.
-        # spsg=fgh.sparse_powerset_graph(self.mvars,self.computers)
-
-        ################# linear A1->A2->A3
-        spsg = fgh.sparse_powerset_graph(frozenset({a2_from_a1, a3_from_a2}))
-        self.assertSetEqual(
-            set(spsg.nodes()), {frozenset({A1}), frozenset({A2}), frozenset({A3})}
-        )
-        self.assertSetEqual(
-            set(spsg.edges()),
-            {(frozenset({A1}), frozenset({A2})), (frozenset({A2}), frozenset({A3}))},
-        )
-        ################## cross
-        #       B-2->B-1->B0->B1->B2
-        #                  ||
-        #                  \/
-        #       A-2->A-1->A0->A1->A2
-        spsg = fgh.sparse_powerset_graph(
-            frozenset(
-                {
-                    b_minus_1_from_b_minus_2,
-                    b0_from_b_minus_1,
-                    b1_from_b0,
-                    b2_from_b1,
-                    b3_from_b2,
-                    #
-                    a0_from_b0,
-                    #
-                    a_minus_1_from_a_minus_2,
-                    a0_from_a_minus_1,
-                    a1_from_a0,
-                    a2_from_a1,
-                    a3_from_a2,
-                }
-            )
-        )
-        self.assertSetEqual(
-            set(spsg.nodes()),
-            {
-                frozenset({B_minus_1}),
-                frozenset({B_minus_2}),
-                frozenset({B0}),
-                frozenset({B1}),
-                frozenset({B2}),
-                frozenset({B3}),
-                frozenset({A_minus_1}),
-                frozenset({A_minus_2}),
-                frozenset({A0}),
-                frozenset({A1}),
-                frozenset({A2}),
-                frozenset({A3}),
-            },
-        )
-        self.assertSetEqual(
-            set(spsg.edges()),
-            {
-                (frozenset({B_minus_2}), frozenset({B_minus_1})),
-                (frozenset({B_minus_1}), frozenset({B0})),
-                (frozenset({B0}), frozenset({B1})),
-                (frozenset({B1}), frozenset({B2})),
-                (frozenset({B2}), frozenset({B3})),
-                #
-                (frozenset({B0}), frozenset({A0})),
-                #
-                (frozenset({A_minus_2}), frozenset({A_minus_1})),
-                (frozenset({A_minus_1}), frozenset({A0})),
-                (frozenset({A0}), frozenset({A1})),
-                (frozenset({A1}), frozenset({A2})),
-                (frozenset({A2}), frozenset({A3})),
-            },
-        )
+        A=g_res.to_AGraph()
+        A.draw('A.ps') 

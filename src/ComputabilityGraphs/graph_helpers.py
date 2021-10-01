@@ -24,6 +24,9 @@ from .helpers import (
     all_computers_for_mvar,
     pretty_name,
 )
+
+from .fast_graph_helpers import fast_graph, project_to_multiDiGraph
+
 #a decorator to time the execution of some of the graph building functions
 def mm_timeit(f):
     def timed(*args,**kw):
@@ -36,39 +39,10 @@ def mm_timeit(f):
     return timed
 
 
-def compset_2_string(compset):
-    return "{" + ",".join([pretty_name(c) for c in compset]) + "}"
-
-
-def node_2_string(node):
-    return "{" + ",".join([pretty_name(v) for v in node]) + "}"
-
-
-def nodes_2_string(node):
-    return "[ " + ",".join(
-        [node_2_string(n) for n in node]
-    ) + " ]"
-
-def edge_2_string(e):
-    return "(" + node_2_string(e[0]) + "," + node_2_string(e[1]) + ")"
-
-
 def immutable_edge(edge):
     s, d, dat = edge
     return (s, d, frozendict(dat))
 
-
-def equivalent_singlegraphs(g1_single: nx.DiGraph, g2_single: nx.DiGraph) -> bool:
-    return all(
-        [
-            g1_single.get_edge_data(*e) == g2_single.get_edge_data(*e)
-            for e in g1_single.edges()
-        ]
-        + [
-            g1_single.get_edge_data(*e) == g2_single.get_edge_data(*e)
-            for e in g2_single.edges()
-        ]
-    ) & (g1_single.nodes() == g2_single.nodes())
 
 @mm_timeit
 def equivalent_multigraphs(
@@ -142,13 +116,6 @@ def product_graph(*graphs: Tuple[nx.MultiDiGraph]) -> nx.MultiDiGraph:
     return reduce(lambda u, v: product_graph_2(u, v), graphs)
 
 
-def product_graph_2(
-            g1: nx.MultiDiGraph,
-            g2: nx.MultiDiGraph
-        ) -> nx.MultiDiGraph:
-    cp = nx.cartesian_product(g1, g2)
-    prod = nx.MultiDiGraph()
-
 def product_graph_2(g1: nx.MultiDiGraph, g2: nx.MultiDiGraph) -> nx.MultiDiGraph:
     cp = nx.cartesian_product(g1, g2)
     prod = nx.MultiDiGraph()
@@ -178,23 +145,6 @@ def initial_sparse_powerset_graph(computers: Set[Callable]) -> nx.MultiDiGraph:
         spsg.add_edges_from(arg_set_graph(v, computers).edges(data=True))
     return spsg
 
-def initial_sparse_powerset_graph_2(computers: Set[Callable]) -> Tuple[nx.MultiDiGraph,Set[Set]]:
-    #spsg = nx.MultiDiGraph()
-    allMvars = all_mvars(computers)
-    initial_tups = [arg_set_graph_2(v, computers) for v in allMvars]
-    def combine(acc,el):
-        g,all_nodes = acc
-        sub_g,sub_nodes = el
-        spsg=copy(g)
-        ag,comp_nodes=el
-        return (spsg.add_edges_from(sub_g.edges(data=True)),all_nodes.union(sub_nodes))
-
-    spsg,nodes = reduce(comb,initial_tups,nx.MultiDiGraph(),frozenset([]))
-    #for v in allMvars:
-    #    asg = arg_set_graph(v, computers)
-    #    new_node
-    #    spsg.add_edges_from(asg.edges(data=True))
-    return (spsg,nodes)
 
 #@mm_timeit
 def update_step(
@@ -212,7 +162,6 @@ def update_step(
 
     return new
 
-@lru_cache
 def sparse_powerset_graph(computers: Set[Callable]) -> nx.MultiDiGraph:
     old = initial_sparse_powerset_graph(computers)
     new = update_step(old, computers)
@@ -222,6 +171,9 @@ def sparse_powerset_graph(computers: Set[Callable]) -> nx.MultiDiGraph:
         # print(equivalent_multigraphs(old, new))
     return new
 
+def fast_sparse_powerset_graph(computers):
+    fg = fast_graph(computers)
+    return project_to_multiDiGraph(fg)
 
 
 def update_generator(

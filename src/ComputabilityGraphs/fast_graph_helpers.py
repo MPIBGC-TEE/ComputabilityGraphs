@@ -12,6 +12,36 @@ from testinfrastructure.helpers import pp, pe
 from .TypeSynonyms import Node, Decomp, Computer, ComputerSet
 from . import helpers as h
 from .FastGraph import  FastGraph
+from .Decomposition import Decomposition
+from .Node import Node
+from .ComputerSet import ComputerSet
+
+def combine(
+        g1: FastGraph,
+        g2: FastGraph
+    ):
+    css_key = g1.__class__.css_key
+    g=deepcopy(g1)
+    for node in g2.get_Nodes():
+        g.add_Node(node)
+
+    for decomp in g2.get_Decomps():
+        g.add_unconnected_Decomp(decomp)
+
+    for (src,target,edge_dict) in g2.dg.edges(data=True):
+        if type(src) == Node and type(target)==Decomposition and css_key in edge_dict.keys():
+                g.connect_Node_2_Decomposition(
+                        node=src,
+                        target_decomp=target,
+                        computer_sets=edge_dict[css_key]
+                )
+        else: #if type(src)==Decomposition and type(target)==Node: 
+                g.connect_Decomposition_2_Node(
+                        decomp=src,
+                        target_node=target
+                )
+
+    return g
 
 def src_node_computersets_tuples_from_decomp(
         g: FastGraph,
@@ -140,11 +170,13 @@ def add_all_arg_set_graphs_to_decomp(
     src_sets_wo_ss = h.remove_supersets(src_sets)
     src_nodes_wo_ss = frozenset(map(src2node, src_sets_wo_ss))
     super_sets = frozenset.difference(src_sets, src_sets_wo_ss)
+    print("supersets="+h.nodes_2_string(super_sets))
     super_set_nodes = frozenset(map(src2node, super_sets))
     super_set_nodes_already_in_g = frozenset.intersection(
         g_new.get_Nodes(),
         super_set_nodes
     )
+    print("super_set_nodes_alreay_in_G="+h.nodes_2_string(super_set_nodes_already_in_g))
 
     relevant_nodes = frozenset.union(
         super_set_nodes_already_in_g,
@@ -183,6 +215,14 @@ def add_arg_set_graphs_to_decomps(
 
     return reduce(f, decomps, (g, frozenset()))
 
+def prospective_decomp_list(node,uncomputable):
+    actives = h.power_set(node)
+    return [
+        Decomposition(active=Node(a),passive=Node(frozenset.difference(node,a))) 
+        for a in actives 
+        if len(frozenset.intersection(a, uncomputable)) == 0 and len(a) != 0
+    ]
+
 def add_all_decompositions_to_node(
         g: FastGraph,
         node: Node,
@@ -196,11 +236,7 @@ def add_all_decompositions_to_node(
     #from IPython import embed; embed()
 
     actives = h.power_set(node)
-    decompositions = [
-        (a,frozenset.difference(node,a)) 
-        for a in actives 
-        if len(frozenset.intersection(a, uncomputable)) == 0 
-    ]
+    decompositions = prospective_decomp_list(node,uncomputable)
     new_decompositions = frozenset(filter(lambda d: not(g.has_Decomp(d)), decompositions))
     for d in decompositions:
         g.add_Decomp(node,d)
@@ -242,7 +278,7 @@ def fast_graph_old(cs: ComputerSet) -> FastGraph:
     return g_new3
 
 def fast_graph(cs: ComputerSet) -> FastGraph:    
-    g,new_nodes = last(update_generator(cs,max_it=20))
+    g,new_nodes = last(update_generator(cs,max_it=30))
     return g
 
 def last(iterator):
@@ -256,6 +292,7 @@ def update_generator(
     if max_it < 0:
         raise IndexError("update sequence indices have to be larger than 0")
     uncomputable = h.uncomputable(cs) 
+    print('uncomputable='+h.node_2_string(uncomputable))
     
     g, ds= initial_fast_graph(cs)
     yield (g, ds)
@@ -265,6 +302,7 @@ def update_generator(
         print(counter)
         # first halfstep
         g, ns = add_arg_set_graphs_to_decomps(g, ds, cs)
+        print('new_nodes='+h.nodes_2_string(ns))
         if ((len(ns) == 0) or (counter > max_it)):
             break
         yield (g, ns)
@@ -300,6 +338,37 @@ def initial_fast_graph(cs: ComputerSet) -> FastGraph:
 
     return g, new_decompositions 
     
+def add_passive(sg,p):
+    d2nes = [(s,t) for  (s,t) in sg.dg.edges if sg.dg.nodes[t]['bipartite']==0]
+    n2des = [
+            (s,t,d) 
+            for  (s,t,d) in sg.dg.edges(data=FastGraph.css_key)
+            if sg.dg.nodes[t]['bipartite']==1
+    ]
+    
+    tsg = FastGraph()
+    # in case we have unconnected nodes in sg (e.g. single node graphs 
+    for t in sg.get_Nodes():
+        tp = t.add_passive(p)
+        tsg.add_Node(tp)
+    
+    for (s,t) in d2nes:
+        sp = s.add_passive(p)
+        tp = t.add_passive(p)
+        #tsg.add_Node(tp)
+        tsg.add_Decomp(decomp=sp,targetNode=tp)
+        
+    for (s,t,css) in n2des:
+        sp = s.add_passive(p)
+        tp = t.add_passive(p)
+        tsg.add_connected_Node(
+            node=sp,
+            target_decomp=tp,
+            computer_sets=css
+        )
+
+    return tsg
+
 def draw_update_sequence(
     computers,
     max_it,
@@ -311,16 +380,21 @@ def draw_update_sequence(
     print(type(lg[-1]))
     nr = len(lg)
     fig.set_size_inches(20, 20 * nr)
-    pos = nx.spring_layout(lg[-1].dg)
+    #pos = nx.spring_layout(lg[-1].dg)
     # layout alternatives
-    # pos = nx.spring_layout(lg[-1], iterations=20)
-    # pos = nx.circular_layout(lg[-1] )
-    # pos = nx.kamada_kawai_layout (lg[-1])
-    # pos = nx.planar_layout (lg[-1])
-    # pos = nx.random_layout (lg[-1])
-    # pos = nx.shell_layout (lg[-1])
-    # pos = nx.spectral_layout (lg[-1])
-    # pos = nx.spiral_layout (lg[-1])
+    pos = nx.spring_layout(
+        lg[-1].dg,
+        scale=10,
+        fixed=None,
+        dim=2
+    )
+    #pos = nx.circular_layout(lg[-1].dg )
+    #pos = nx.kamada_kawai_layout (lg[-1].dg,scale=2)
+    #pos = nx.planar_layout (lg[-1].dg)
+    #pos = nx.random_layout (lg[-1].dg)
+    #pos = nx.shell_layout (lg[-1].dg)
+    #pos = nx.spectral_layout (lg[-1].dg)
+    #pos = nx.spiral_layout (lg[-1].dg)
     axs = fig.subplots(nr, 1, sharex=True, sharey=True)
     for i in range(nr):
         lg[i].draw_matplotlib(
@@ -329,8 +403,3 @@ def draw_update_sequence(
             computer_aliases,
             pos=pos
         )
-    
-
-def sparse_powerset_graph(computers):
-    fg = fast_graph(computers)
-    return project_to_multiDiGraph(fg)

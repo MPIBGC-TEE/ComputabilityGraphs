@@ -1,63 +1,52 @@
-from typing import FrozenSet
-from ComputabilityGraphs.graph_helpers import equivalent_singlegraphs
 import networkx as nx
+from typing import FrozenSet
+from copy import deepcopy
 from frozendict import frozendict
 from functools import reduce
+from pygraphviz.agraph import AGraph
 from .TypeSynonyms import Node, Decomp, Computer, ComputerSet
-from .helpers import merge_dicts
-from .graph_plotting import varset_2_string, varsettuple_2_string, compset_2_string
-from . import graph_helpers as gh
+from .Decomposition import Decomposition
+from .helpers import ( 
+    equivalent_singlegraphs,
+    merge_dicts,
+    varset_2_string,
+    varsettuple_2_string,
+    compset_2_string
+)
 
 class FastGraph:
     '''This class represents a special kind of bipartite graph 
     and delegates most of its methods to its internal nx.DiGraph instance'''
+    # class variable
+    css_key='computer_sets'
+
     def __init__(self):
         dg = nx.DiGraph()
         self.dg = dg
 
+    def __str__(self):
+        css_key = self.__class__.css_key
+        return "\n".join(
+            [
+                str(s) + '-' +str(d[css_key]) + '->' + str(t) if css_key in d.keys() 
+                else str(s) + '->' + str(t) 
+                for (s, t, d) in self.dg.edges(data=True)
+            ]
+        ) 
 
     def get_Nodes(self):
         dg = self.dg
         try:
             sets = frozenset({n for n, d in dg.nodes(data=True) if d["bipartite"] == 0})
         except:
-            from IPython import embed;embed()
+            sets = frozenset() 
 
         return sets
 
     def get_Decomps(self):
-        return frozenset({n for n, d in self.dg.nodes(data=True) if d["bipartite"] == 1})
+        k="bipartite"
+        return frozenset({n for n, d in self.dg.nodes(data=True) if k in d.keys() and d[k] == 1})
 
-   # def src_nodes_computerset_tuples(
-   #         self,
-   #         n: Node 
-   #     )->FrozenSet[Tuple[Node,ComputerSet]]
-   #     """Return set of tuples 
-   #     Since FastGraph is internally bibartite, vvery node has 
-   #     a the direct predecessors of a node are decompositions.
-   #     Every decomposition has a node as predecessor to which
-   #     s1 = frozenset([tC.A])
-   #     s2 = frozenset([tC.B])
-   #     n = frozenset.union(s1,s2)
-   #     d = (s1,s2) 
-   #     g.add_Node(n)
-   #     g.add_Decomp(targetNode=n,decomp=d)
-   #     it is connected via a set of computersets.
-   #     This function returns the src nodes along wiht the 
-   #     computersets leading to the target_node (via the 
-   #     decompositions). The function is needed for the projection
-   #     of the bipartite graph onto the directed multigraph that
-   #     consists only of Nodes."""
-   #         
-   #     def f(acc,el):
-   #         decomp,_ = el
-   # 
-   #         computersets = reduce(get_computersets_from_decomp, decomps)
-   #          
-   #     tuples = reduce(
-   #         f,
-   #         self.dg.in_edges()
-   #     )
     def in_edges(self,*args,**kwargs):
         return self.dg.in_edges(*args,**kwargs)
 
@@ -69,6 +58,45 @@ class FastGraph:
             node: Node
         ):
         self.dg.add_node(node, bipartite=0)
+
+    def add_connected_Node(
+            self,
+            node: Node,
+            target_decomp: Decomposition,
+            computer_sets: FrozenSet[ComputerSet]
+        ):
+        self.add_Node(node)
+        self.add_edge(
+            node,
+            target_decomp,
+            computer_sets=computer_sets
+        )
+        
+    def connect_Node_2_Decomposition(
+            self,
+            node,
+            target_decomp,
+            computer_sets
+        ):
+        if not self.has_edge(node,target_decomp): 
+            self.add_connected_Node(
+                node=node,
+                target_decomp=target_decomp,
+                computer_sets=computer_sets
+            )
+        else:
+            css_key= self.__class__.css_key
+            css = self.dg[node][target_decomp][css_key]
+            css = frozenset.union(css,computer_sets)
+    
+    def connect_Decomposition_2_Node(
+            self,
+            decomp,
+            target_node
+        ):
+        if not self.has_edge(decomp,target_node): 
+            self.add_edge(decomp,target_node)
+
 
     def has_Decomp(
             self,
@@ -84,16 +112,28 @@ class FastGraph:
         dg = self.dg
         dg.add_node(decomp, bipartite=1)
         dg.add_edge(decomp, targetNode)
+    
+    def add_unconnected_Decomp(
+            self,
+            decomp: Decomp
+        ):
+        dg = self.dg
+        dg.add_node(decomp, bipartite=1)
 
-    def add_edge(self,s,t,**kwargs):
+
+
+
+    def add_edge(self,s,t,computer_sets=None,**kwargs):
         self.dg.add_edge(s,t,**kwargs)
+        if computer_sets is not None:
+            self.dg[s][t][self.__class__.css_key]=computer_sets
 
     def has_edge(self, s, t) -> bool:
         return self.dg.has_edge(s,t)
     
 
     def __eq__(self,other):
-        return gh.equivalent_singlegraphs(self.dg,other.dg)
+        return equivalent_singlegraphs(self.dg,other.dg)
 
     def draw_matplotlib(
             self,
@@ -180,7 +220,7 @@ class FastGraph:
         # directly (no edgelabels for MultiDiGraphs)
         # therefore we draw only one line for all computersets
         def edgeDict_to_string(ed):
-            target = "computer_sets"
+            target = self.__class__.css_key
             if target in ed.keys():
                 comp_sets=ed[target]
                 comp_set_strings= [compset_2_string(cs, computer_aliases) for cs in comp_sets]
@@ -198,3 +238,45 @@ class FastGraph:
     
         
 
+    def to_AGraph(
+            self,
+            mvar_aliases=frozendict({}),
+            computer_aliases=frozendict({}),
+            targetNode=None,
+            pos=None,
+            **kwargs
+    ):
+        nodes = self.get_Nodes()
+        decomps = self.get_Decomps()
+        A = AGraph(directed=True)
+        A.node_attr["style"] = "filled"
+        A.node_attr["shape"] = "rectangle"
+        A.node_attr["fixedsize"] = "false"
+        A.node_attr["fontcolor"] = "black"
+
+        for node in nodes:
+            A.add_node(varset_2_string(node, mvar_aliases),color='orange')
+
+        for node in decomps:
+            A.add_node(varsettuple_2_string(node, mvar_aliases),color='green')
+
+        edges = self.dg.edges(data=True)
+        for edge in edges:
+            s, t, data_dict = edge
+            if s in nodes: 
+                computer_sets = data_dict["computer_sets"]
+                ss = varset_2_string(s, mvar_aliases)
+                st = varsettuple_2_string(t, mvar_aliases)
+                for cs in computer_sets:
+                    for c in cs:
+                        A.add_edge(ss, st)
+                        Ae = A.get_edge(ss, st)
+                        #Ae.attr["color"] = cf(c)
+                        #Ae.attr["fontcolor"] = cf(c)
+                        Ae.attr["label"] = c.__name__
+            else:
+                ss = varsettuple_2_string(s, mvar_aliases)
+                st = varset_2_string(t, mvar_aliases)
+                A.layout('circo')
+                A.add_edge(ss, st)
+        return A
