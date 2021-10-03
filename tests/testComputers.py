@@ -8,8 +8,6 @@ class A_minus_2:
 
 
 class A:
-    """A variable we assume to be given"""
-
     pass
 
 
@@ -64,7 +62,6 @@ class C:
 class D:
     pass
 
-
 class E:
     pass
 
@@ -111,8 +108,6 @@ def a_from_b_d(b: B, d: D) -> A:
 
 def a_from_x(x: X) -> A:
     return A()
-
-
 
 
 def a_from_y(y: Y) -> A:
@@ -247,6 +242,18 @@ def b3_from_b2(b2: B2) -> B3:
 
 def b_from_i_j(i: I, j: J) -> B:
     return B()
+
+def d_from_a_c(a: A, c: C) -> D:
+    return D()
+
+def d_from_b_c(b: B, c: C) -> D:
+    return D()
+
+def b_from_a(a: A) -> B:
+    return B()
+
+def f_from_e(e: E) -> F:
+    return F()
 
 # for easier debugging in ipython
 computers = frozenset(

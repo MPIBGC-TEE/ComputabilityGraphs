@@ -226,15 +226,14 @@ class TestGraphs(InDirTest):
         # the source set.
         # The complete graph would contain all elements of the powerset of allMvars and all
         # possible connections, which is prohibitively expensive.
-        # Instead we will compute a subgraph where we start with one element sets as targets
-        # and infer the predecessors of those sets and then the predecessors of the predecessors and so on until we do not find new nodes=start_sets.
+        # Instead we will compute a tree where we start with a single one element sets a target
+        # and infer the predecessors and then the predecessors of the predecessors and so on until 
+        # we do not find new nodes=start_sets.
         # spsg=sparse_powerset_graph(self.mvars,self.computers)
 
         ################# linear A1->A2->A3
         computers = frozenset({a2_from_a1, a3_from_a2})
         spsg = sparse_powerset_graph(computers)
-        fspsg = fast_sparse_powerset_graph(computers)
-        self.assertTrue(equivalent_multigraphs(spsg,fspsg))
         
         self.assertSetEqual(
             set(spsg.nodes()), {frozenset({A1}), frozenset({A2}), frozenset({A3})}
@@ -266,8 +265,6 @@ class TestGraphs(InDirTest):
             }
         )
         spsg = sparse_powerset_graph(computers)
-        fspsg = fast_sparse_powerset_graph(computers)
-        self.assertTrue(equivalent_multigraphs(spsg,fspsg))
         self.assertSetEqual(
             set(spsg.nodes()),
             {
@@ -322,10 +319,6 @@ class TestGraphs(InDirTest):
         draw_update_sequence(computers,5,fig)
         fig.savefig('update.pdf')
         
-        fig=plt.figure(figsize=(60,60))
-        fgh.draw_update_sequence(computers,25,fig)
-        fig.savefig('fast_update.pdf')
-
 
     def test_minimal_startnodes_for_single_var(self):
         computers = frozenset(
@@ -341,7 +334,6 @@ class TestGraphs(InDirTest):
             ]
         )
         spsg = sparse_powerset_graph(self.computers)
-        fspsg = fast_sparse_powerset_graph(self.computers)
         fig1 = plt.figure(figsize=(15, 15))
         axs = fig1.subplots(2, 1)
         draw_ComputerSetMultiDiGraph_matplotlib(
@@ -349,11 +341,7 @@ class TestGraphs(InDirTest):
             spsg,
             targetNode=frozenset({B})
         )
-        draw_ComputerSetMultiDiGraph_matplotlib(
-            axs[1],
-            fspsg,
-            targetNode=frozenset({B})
-        )
+
         fig1.savefig("spsg_B.pdf")
         plt.close(fig1)
         # After the graph has been computed we can use it
@@ -388,7 +376,6 @@ class TestGraphs(InDirTest):
 
     def test_minimal_startnodes_for_node(self):
         spsg = sparse_powerset_graph(self.computers)
-        fspsg = fast_sparse_powerset_graph(self.computers)
         targetVars = frozenset({A, B})
         fig1 = plt.figure(figsize=(15, 30))
         axs = fig1.subplots(2, 1)

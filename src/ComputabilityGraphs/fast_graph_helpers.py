@@ -104,6 +104,7 @@ def project_to_multiDiGraph(fg):
 
 def add_combi_arg_set_graph(
         g: FastGraph,
+        root: Node,
         decomp: Decomp,
         computer_combi: Set[Computer]
 ) -> Tuple[
@@ -113,24 +114,32 @@ def add_combi_arg_set_graph(
     _, passive = decomp
     args = reduce(frozenset.union,[h.arg_set(computer) for computer in computer_combi],frozenset())
     arg_node = frozenset.union(args,passive)
-    e = (arg_node, decomp)
-    # A situation arising from combis like {a(c),b(d)} and {b(c),a(d)}
-    G = deepcopy(g)
-    if G.has_edge(*e):
-        key = 'computer_sets'
-        # fixme mm 8-21-2021 
-        data = G.get_edge_data(*e)[key]
-        G.get_edge_data(*e)[key] =frozenset.union(data,frozenset({computer_combi}))
-        return (G, frozenset())
+    avoid_nodes = g.visited_Nodes_on_paths(
+        src=decomp,
+        root=root
+    )
+    if any([arg_node.issuperset(avn) for avn in avoid_nodes]):
+        return (g,frozenset())
     else:
-        G.add_Node(arg_node)
-        # if edge does not exist
-        G.add_edge(arg_node, decomp, computer_sets=frozenset([computer_combi]))
-        return (G, frozenset({arg_node}))
+        e = (arg_node, decomp)
+        # A situation arising from combis like {a(c),b(d)} and {b(c),a(d)}
+        G = deepcopy(g)
+        if G.has_edge(*e):
+            key = 'computer_sets'
+            # fixme mm 8-21-2021 
+            data = G.get_edge_data(*e)[key]
+            G.get_edge_data(*e)[key] =frozenset.union(data,frozenset({computer_combi}))
+            return (G, frozenset())
+        else:
+            G.add_Node(arg_node)
+            # if edge does not exist
+            G.add_edge(arg_node, decomp, computer_sets=frozenset([computer_combi]))
+            return (G, frozenset({arg_node}))
 
 
 def add_combis_arg_set_graphs_to_decomp(
         g: FastGraph,
+        root: Node,
         decomp: Decomp,
         computer_combis: FrozenSet[ComputerSet]
 ) -> Tuple[
@@ -140,7 +149,7 @@ def add_combis_arg_set_graphs_to_decomp(
     def f(acc, el):
         g, new_nodes = acc
         computer_combi = el
-        g_new,combi_new_nodes = add_combi_arg_set_graph(g, decomp, computer_combi)
+        g_new,combi_new_nodes = add_combi_arg_set_graph(g, root, decomp, computer_combi)
         new_nodes = frozenset.union(new_nodes, combi_new_nodes)
         return(g_new, new_nodes)
 
@@ -149,6 +158,7 @@ def add_combis_arg_set_graphs_to_decomp(
 
 def add_all_arg_set_graphs_to_decomp(
         g: FastGraph,
+        root: Node,
         decomp: Decomp,
         all_computers
 ) -> Tuple[
@@ -191,6 +201,7 @@ def add_all_arg_set_graphs_to_decomp(
 
     return add_combis_arg_set_graphs_to_decomp(
                 g_new,
+                root,
                 decomp,
                 relevant_combis
             )
@@ -198,17 +209,22 @@ def add_all_arg_set_graphs_to_decomp(
 
 def add_arg_set_graphs_to_decomps(
         g: nx.DiGraph,
+        root: Node,
         decomps: Set[Decomp],
         all_computers: FrozenSet[Computer]
 ) -> Tuple[
     nx.DiGraph,
     FrozenSet[Node]
 ]:
-    def f(acc, el):
+    def f(acc, decomp):
         g, new_nodes = acc
-        decomp = el
         active, passive = decomp
-        g_new, combi_new_nodes = add_all_arg_set_graphs_to_decomp(g, decomp, all_computers)
+        g_new, combi_new_nodes = add_all_arg_set_graphs_to_decomp(
+                g,
+                root,
+                decomp,
+                all_computers
+        )
 
         new_nodes = frozenset.union(new_nodes, combi_new_nodes)
         return(g_new, new_nodes)
@@ -223,68 +239,107 @@ def prospective_decomp_list(node,uncomputable):
         if len(frozenset.intersection(a, uncomputable)) == 0 and len(a) != 0
     ]
 
+def prospective_decomp_list_2(
+        node: Node,
+        passive: FrozenSet[Node]
+    ):
+    # instead of uncomputable variables we use a more general set of 
+    # uncomputable Nodes
+    allowed_actives = [ 
+        a for a in h.power_set(node) 
+        if not any([a.issuperset(p) for p in passive]) and
+        a != Node([])
+    ]
+
+    return [
+        Decomposition(active=Node(a),passive=Node(frozenset.difference(node,a))) 
+        for a in allowed_actives 
+    ]
+
 def add_all_decompositions_to_node(
         g: FastGraph,
         node: Node,
-        uncomputable: FrozenSet[type]
+        passive: FrozenSet[Node],
     ) -> Tuple[FastGraph, FrozenSet[Decomp]]:
     
-    if node.intersection(uncomputable) == node:
-        # if all the variables in the node are uncomputable we
-        # dont add new decompositions
-        return g, frozenset([])
-    #from IPython import embed; embed()
 
-    actives = h.power_set(node)
-    decompositions = prospective_decomp_list(node,uncomputable)
-    new_decompositions = frozenset(filter(lambda d: not(g.has_Decomp(d)), decompositions))
-    for d in decompositions:
+    decompositions_2 = prospective_decomp_list_2(node,passive)
+    if len(decompositions_2) == 0:
+        return g, frozenset([])
+
+    new_decompositions = frozenset(filter(lambda d: not(g.has_Decomp(d)), decompositions_2))
+    for d in decompositions_2:
         g.add_Decomp(node,d)
 
     return (g, new_decompositions)
 
 def add_all_decompositions_to_all_nodes(
         g: FastGraph,
+        root: Node,
         nodes: FrozenSet[Node],
         uncomputable: FrozenSet[type]
         ) -> Tuple[FastGraph, FrozenSet[Decomp]]: 
     g_new = deepcopy(g)
     def f(acc, node):
         g, decompositions = acc
-        g_new, node_decomps = add_all_decompositions_to_node(g, node, uncomputable=uncomputable)
+        # we want to avoid Decompostions with active parts containing 
+        # variables that have been in the passive parts of decompositions on 
+        # our path(s) to the starting point.
+        # In other words decompositions are branchings that should stay in effect
+        # for all the following branchings. If we decide that {C} is considered
+        # passive and not to be resolved in one decomposition we want all future 
+        # decompositions to treat it as such and include it in the uncomputables
+        
+        res_p = g.passive_Nodes_in_Decompositions_on_paths(
+            src=node,
+            root=root
+        )
+        passive=frozenset.union(
+            frozenset([n for n in res_p if n!=Node({})]), 
+            frozenset([Node({v}) for v in uncomputable])
+        )
+
+
+
+
+
+        g_new, node_decomps = add_all_decompositions_to_node(
+            g, 
+            node, 
+            passive=passive
+        )
         new_decompositions = frozenset.union(
             decompositions,
             node_decomps
         )
         return g_new, new_decompositions
 
-    g_res, all_new_decompositions = reduce(f, nodes, (g_new, frozenset()))
+    g_res, all_new_decompositions = reduce(
+        f,
+        nodes,
+        (g_new, frozenset())
+    )
     return g_res, all_new_decompositions
 
 
-def fast_graph_old(cs: ComputerSet) -> FastGraph:    
-    # The iterator has not been implemented yet
-    # this is a manual version
-    uncomputable = h.uncomputable(cs)
-    g, new_dcs = initial_fast_graph(cs)
-    g_new, arg_set_nodes = add_arg_set_graphs_to_decomps(g ,new_dcs, cs)
-    g_new2,new_dcs2 = add_all_decompositions_to_all_nodes(
-        g_new,
-        arg_set_nodes,
-        uncomputable
-    ) 
-    g_new3, arg_set_nodes = add_arg_set_graphs_to_decomps(g_new2 ,new_dcs2, cs)
 
-    return g_new3
-
-def fast_graph(cs: ComputerSet) -> FastGraph:    
-    g,new_nodes = last(update_generator(cs,max_it=30))
+def fast_graph(
+        root_type: type,
+        cs: ComputerSet
+    ) -> FastGraph:    
+    g,new_nodes = last(update_generator(
+        root_type,
+        cs,
+        max_it=30
+    ))
     return g
+
 
 def last(iterator):
     return reduce(lambda acc,el:el,iterator)
 
 def update_generator(
+        root_type: type,
         cs: ComputerSet,
         max_it: int
     ) -> 'generator':
@@ -294,14 +349,17 @@ def update_generator(
     uncomputable = h.uncomputable(cs) 
     print('uncomputable='+h.node_2_string(uncomputable))
     
-    g, ds= initial_fast_graph(cs)
+    g, ds= initial_fast_graph(
+        root_type=root_type,
+        cs=cs
+    )
     yield (g, ds)
     counter = 1
 
     while True:
         print(counter)
         # first halfstep
-        g, ns = add_arg_set_graphs_to_decomps(g, ds, cs)
+        g, ns = add_arg_set_graphs_to_decomps(g, Node({root_type}),ds, cs)
         print('new_nodes='+h.nodes_2_string(ns))
         if ((len(ns) == 0) or (counter > max_it)):
             break
@@ -311,6 +369,7 @@ def update_generator(
         # second halfstep
         g, ds = add_all_decompositions_to_all_nodes(
             g,
+            Node({root_type}),
             ns,
             uncomputable=uncomputable
         )
@@ -320,19 +379,22 @@ def update_generator(
         counter += 1
 
     
-def initial_fast_graph(cs: ComputerSet) -> FastGraph:
+def initial_fast_graph(
+        root_type: type,
+        cs: ComputerSet
+) -> FastGraph:
+    root = Node({root_type}) 
     g = FastGraph()
-    mvs = h.all_mvars(cs)
-    for v in mvs:
-        g.add_Node(frozenset([v]))
-
-    computables = frozenset.difference(mvs,  h.uncomputable(cs))
+    g.add_Node(root)
     new_decompositions = frozenset(
         [
-            (frozenset([v]), frozenset([])) 
-            for v in computables
+            Decomposition(
+                active=root,
+                passive=Node([])
+            ) 
+        
         ]
-    )
+    ) if root_type not in h.uncomputable(cs) else frozenset()
     for dn in new_decompositions:
         g.add_Decomp(dn[0], dn)
 
@@ -370,13 +432,21 @@ def add_passive(sg,p):
     return tsg
 
 def draw_update_sequence(
-    computers,
-    max_it,
-    fig,
-    mvar_aliases=frozendict({}),
-    computer_aliases=frozendict({})
-):
-    lg = [g for (g,new) in update_generator(computers, max_it=max_it)]
+        root_type: type,
+        computers: ComputerSet,
+        max_it: int,
+        fig: plt.figure,
+        mvar_aliases=frozendict({}),
+        computer_aliases=frozendict({})
+    ):
+    lg = [
+        g for (g,new) 
+        in update_generator(
+            root_type,
+            computers,
+            max_it=max_it
+        )
+    ]
     print(type(lg[-1]))
     nr = len(lg)
     fig.set_size_inches(20, 20 * nr)

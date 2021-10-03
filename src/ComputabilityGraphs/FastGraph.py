@@ -34,6 +34,71 @@ class FastGraph:
             ]
         ) 
 
+
+    def passive_Nodes_in_Decompositions_on_paths(
+            self,
+            src: Node,
+            root: Node
+        )-> FrozenSet[Node]:
+
+        paths = nx.shortest_simple_paths(
+            self.dg,
+            source=src,
+            target=root
+        )
+        # the result is a generator of node lists
+        # from every node list we extract the Decompositions
+        # and from every Decomposition the passive part
+        dg = self.dg
+        def decomps_from_nodelist(node_list):
+            return [ 
+                n for n in node_list
+                if 'bipartite' in dg.nodes[n].keys() and 
+                dg.nodes[n]['bipartite']==1
+                
+            ]
+        
+        def passive_Nodes_list(path):
+            ds = decomps_from_nodelist(path)
+            return [ d.passive for d in ds]
+
+        return frozenset(
+            reduce(
+                lambda acc,pl: acc + pl,
+                map(passive_Nodes_list,paths)
+            )
+        )
+
+    def visited_Nodes_on_paths(
+            self,
+            src: Decomposition,
+            root: Node
+        )-> FrozenSet[Node]:
+
+        paths = nx.shortest_simple_paths(
+            self.dg,
+            source=src,
+            target=root
+        )
+        # the result is a generator of node lists
+        # from every node list we extract the Decompositions
+        # and from every Decomposition the passive part
+        dg = self.dg
+        def previous_nodes_nodelist(node_list):
+            return [ 
+                n for n in node_list
+                if 'bipartite' in dg.nodes[n].keys() and 
+                dg.nodes[n]['bipartite']==0
+                
+                ] 
+        
+        return frozenset(
+            reduce(
+                lambda acc,pl: acc + pl, # combine the lists of the different paths
+                map(previous_nodes_nodelist,paths)
+            )
+        )
+
     def get_Nodes(self):
         dg = self.dg
         try:

@@ -25,7 +25,8 @@ from .helpers import (
     pretty_name,
 )
 
-from .fast_graph_helpers import fast_graph, project_to_multiDiGraph
+from .fast_graph_helpers import fast_graph, project_to_multiDiGraph, combine
+from .FastGraph import FastGraph
 
 #a decorator to time the execution of some of the graph building functions
 def mm_timeit(f):
@@ -171,9 +172,25 @@ def sparse_powerset_graph(computers: Set[Callable]) -> nx.MultiDiGraph:
         # print(equivalent_multigraphs(old, new))
     return new
 
-def fast_sparse_powerset_graph(computers):
-    fg = fast_graph(computers)
-    return project_to_multiDiGraph(fg)
+def fast_sparse_powerset_graph(
+        computers
+    ):
+    def f(g,root_type):
+        fg = fast_graph(
+         root_type,
+         computers
+        )
+        g=deepcopy(g)
+        return combine(g,fg)
+
+    mvars=all_mvars(computers)
+    sgs = [
+            fast_graph(root_type,computers) 
+            for root_type in mvars
+    ]
+
+    cfg = reduce(f,mvars,FastGraph())
+    return project_to_multiDiGraph(cfg)
 
 
 def update_generator(
