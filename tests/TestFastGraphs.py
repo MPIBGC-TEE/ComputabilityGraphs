@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
-from typing import FrozenSet
 import matplotlib.pyplot as plt
-from frozendict import frozendict
-from copy import copy, deepcopy
-import networkx as nx
-from networkx.algorithms import bipartite
+from copy import  deepcopy
 from testinfrastructure.InDirTest import InDirTest
-from testinfrastructure.helpers import pp, pe
-from unittest import skip
 from ComputabilityGraphs.fast_graph_helpers import (
         add_combi_arg_set_graph,
         add_combis_arg_set_graphs_to_decomp,
@@ -28,31 +22,15 @@ from ComputabilityGraphs.ComputerSet import ComputerSet
 from ComputabilityGraphs.ComputerSetSet import ComputerSetSet
 
 from testComputers import (
-    A, A1, A2, A3, A0, A_minus_1, A_minus_2, B,
-    B1, B2, B3, B0, B_minus_1, B_minus_2, C, D, E, F, G, H, I,J, X, Y,
-    a_from_x,
-    b_from_y,
+    A, A2, A3, B, B1, B0, C, D, E, F, G, H, I,
     a_from_i,
     b_from_c_d,
     b_from_e_f,
-    a_from_y,
-    b_from_x,
-    a_from_z,
-    b_from_z,
     c_from_b,
     d_from_b,
     d_from_g_h,
-    a2_from_a1,
     a3_from_a2,
-    b_minus_1_from_b_minus_2,
-    b0_from_b_minus_1,
-    a_minus_1_from_a_minus_2,
-    a1_from_a0,
-    a0_from_a_minus_1,
     b1_from_b0,
-    b2_from_b1,
-    b3_from_b2,
-    a0_from_b0,
     a3_from_b0,
     b1_from_a2,
     e_from_b,
@@ -1096,7 +1074,6 @@ class TestFastGraph2(InDirTest):
                                 )
         root=Node({B})
         g_res1.draw_matplotlib(ax1)
-        pp('decompositions1',locals())
 
         g_res2,nodes2 = fgh.add_arg_set_graphs_to_decomps(
             g_res1,
@@ -1105,10 +1082,8 @@ class TestFastGraph2(InDirTest):
             all_computers=computers
         )
         g_res2.draw_matplotlib(ax2)
-        pp('nodes2',locals())
 
         uncomputable=h.uncomputable(computers)
-        #pp('uncomputable',locals())
         g_res3,decompositions3= fgh.add_all_decompositions_to_all_nodes(
             g_res2,
             root=root,
@@ -1116,7 +1091,6 @@ class TestFastGraph2(InDirTest):
             uncomputable=uncomputable
         )
         g_res3.draw_matplotlib(ax3)
-        pp('decompositions3',locals())
         
         g_res4,nodes4 = fgh.add_arg_set_graphs_to_decomps(
             g_res3,
@@ -1125,7 +1099,6 @@ class TestFastGraph2(InDirTest):
             all_computers=computers
         )
         g_res4.draw_matplotlib(ax4)
-        pp('nodes4',locals())
 
         g_res5,decompositions5 = fgh.add_all_decompositions_to_all_nodes(
             g_res4,
@@ -1134,7 +1107,6 @@ class TestFastGraph2(InDirTest):
             uncomputable=uncomputable
         )
         g_res5.draw_matplotlib(ax5)
-        pp('decompositions5',locals())
 
         g_res6,nodes6 = fgh.add_arg_set_graphs_to_decomps(
             g_res5,
@@ -1143,7 +1115,6 @@ class TestFastGraph2(InDirTest):
             all_computers=computers
         )
         g_res6.draw_matplotlib(ax6)
-        pp('nodes6',locals())
         fig.savefig("figure.pdf")
 
         

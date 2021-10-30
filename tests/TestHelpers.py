@@ -1,33 +1,10 @@
 from unittest import TestCase
 from frozendict import frozendict
 import ComputabilityGraphs.helpers as h
+from testComputers import  A2, B0
 from testComputers import (
-        A, A1, A2, A3, A0, A_minus_1, A_minus_2, B,
-        B1, B2, B3, B0, B_minus_1, B_minus_2, C, D, E, F, G, H, I, X, Y)
-from testComputers import computers
-from testComputers import (
-    a_from_x,
-    b_from_y,
-    a_from_y,
-    b_from_x,
-    a_from_z,
-    b_from_z,
-    c_from_b,
-    d_from_b,
-    d_from_g_h,
-    a2_from_a1,
     a3_from_a2,
     a3_from_b0,
-    b_minus_1_from_b_minus_2,
-    b0_from_b_minus_1,
-    a_minus_1_from_a_minus_2,
-    a1_from_a0,
-    a0_from_a_minus_1,
-    b1_from_b0,
-    b1_from_a2,
-    b2_from_b1,
-    b3_from_b2,
-    a0_from_b0
 )
 
 
