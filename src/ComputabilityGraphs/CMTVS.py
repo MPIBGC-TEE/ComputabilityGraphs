@@ -3,26 +3,23 @@ from functools import lru_cache
 from frozendict import frozendict
 import networkx as nx
 import inspect
-import importlib
 
-# from ..models.helpers import provided_mvar_values
-#from .helpers import bgc_md2_computers
 from . import helpers as ngh
 from .graph_helpers import (
     minimal_startnodes_for_single_var
 )
 from .ComputerSet import ComputerSet
 from . import fast_graph_helpers as fgh
-# the next imports should not be necessary after the model specific part is factored out
-import matplotlib.pyplot as plt
-from IPython.display import Math
-from IPython.display import display
-from CompartmentalSystems.smooth_reservoir_model import SmoothReservoirModel
-from sympy import latex
+from . import rec_graph_helpers as rgh
+
+# choose which implementation to use
+# at the moment rgh is much faster
+#graph_maker = fgh.fast_graph
+graph_maker = rgh.fast_graph
 
 class CMTVS(frozenset):
     """CMTVS stands for
-    (Connected)(M)ulti(T)ype(V)alue(S)et and is a set of
+    (C)onnected(M)ulti(T)ype(V)alue(S)et and is a set of
     values that all have different ype It is immutable
     and supports normal set operations (inherited from
     frozenset) for its variables.  
@@ -66,31 +63,26 @@ class CMTVS(frozenset):
     def provided_mvar_types(self) -> Set[type]:
         return frozenset(type(v) for v in self.provided_mvar_values)
 
-    #@property
     def computable_mvar_types(self) -> Set[type]:
         return ngh.computable_mvars(
             allComputers=self.computers,
             available_mvars=self.provided_mvar_types
         )
 
-    #@property
-    #def computable_mvar_names(self):
-    #    return [var.__name__ for var in self.computable_mvar_types()]
 
+    def __dir__(self):
+        return super().__dir__() + [
+            "get_{}".format(t.__name__) for t in self.computable_mvar_types()
+        ]
 
-    #def __dir__(self):
-    #    return super().__dir__() + [
-    #        "get_{}".format(name) for name in self.computable_mvar_names
-    #    ]
-
-    #def __getattr__(self, name):
-    #    if name.startswith("get_"):
-    #        var_name = name[4:]
-    #        #for var in self.mvars:
-    #        for var in self.computable_mvar_types():
-    #            if var.__name__ == var_name:
-    #                return lambda: self._get_single_mvar_value(var)
-    #    return super().__getattr__(name)
+    def __getattribute__(self, name):
+        if name.startswith("get_"):
+            var_name = name[4:]
+            #for var in self.mvars:
+            for var in self.computable_mvar_types():
+                if var.__name__ == var_name:
+                    return lambda: self._get_single_value(var)
+        return super().__getattribute__(name)
 
     #@lru_cache
     def path_dict_to_single_mvar(
@@ -101,9 +93,10 @@ class CMTVS(frozenset):
         # should be deprecated since the class MVarSet implements a similar method now
         node = frozenset({t})
         spsg = fgh.project_to_multiDiGraph(
-        	fgh.fast_graph(
+        	graph_maker(
         		root_type=t,
-        		cs=self.computers
+        		cs=self.computers,
+                        given=self.provided_mvar_types
         	)
         )
         graph_min_nodes = minimal_startnodes_for_single_var(spsg, t)
@@ -141,7 +134,7 @@ class CMTVS(frozenset):
     
         pvs = self.provided_mvar_values
         pv_dict = {type(v): v for v in pvs}
-        print(pv_dict)
+        #print(pv_dict)
         if t in [type(v) for v in pvs]:
             return pv_dict[t]
     
@@ -162,9 +155,10 @@ class CMTVS(frozenset):
     
         # create results step by step along the graph
         spsg = fgh.project_to_multiDiGraph(
-        	fgh.fast_graph(
+        	graph_maker(
         		root_type=t,
-        		cs=self.computers
+        		cs=self.computers,
+                        given=self.provided_mvar_types
         	)
         )
         rg = spsg.subgraph(path).copy()
@@ -183,65 +177,3 @@ class CMTVS(frozenset):
             pv_dict.update({ngh.output_mvar(c): apply(c) for c in computers})
     
         return pv_dict[t]
-
-
-    ## fixme mm 9/15/2020
-    ## This method is bgc or even Model specific and would not be part of the more general package
-    #def graph(self):
-    #    target_var = SmoothReservoirModel
-    #    if target_var not in self.computable_mvar_types():
-    #        return
-
-    #    srm = self._get_single_mvar_value(target_var)
-    #    fig = plt.figure()
-    #    rect = (0, 0, 0.8, 1.2)  # l, b, w, h
-    #    ax = fig.add_axes(rect)
-    #    ax.clear()
-    #    srm.plot_pools_and_fluxes(ax)
-    #    plt.close(fig)
-    #    return ax.figure
-    #    out = widgets.Output()
-    #    with out:
-    #        display(var.__name__ + "=")
-    #        display(Math(latex(res)))
-    #        # The latex could be filtered to display subscripts better
-    #        # display(res)
-    #    if capture:
-    #        return out
-    #    else:
-    #        display(out)
-
-
-    ## fixme mm 9/15/2020
-    ## This method is bgc or even Model specific and would not be part of the more general package
-    #def render(self, var):
-    #    res = self._get_single_mvar_value(var)
-    #    display(Math("\\text{" + var.__name__ + "} =" + latex(res)))
-    #    # The latex could be filtered to display subscripts better
-    #    # display(res)
-    #
-
-    ## fixme mm 9/15/2020
-    ## This method is bgc or even Model specific and would not be part of the more general package
-    #@classmethod
-    #def from_model_name(cls,model_id):
-    #    """
-    #    convenience method to get the instance from a submodule of bgc.models
-    #    by just giving the name of the submodule
-    #    """
-    #    sep = "."
-    #    #model_mod_name = sep.join(__name__.split(sep)[:-1])
-    #    models_mod_name = 'bgc_md2.models'
-    #    # in case the module has been created or changed
-    #    # after the current session started
-    #    importlib.invalidate_caches()
-
-    #    mod = importlib.import_module(
-    #        sep + str(model_id) + sep + "source", package=models_mod_name
-    #    )
-    #    retVal= mod.mvs
-    #    if type(retVal)==cls:
-    #        return  retVal
-    #    else:
-    #        raise Exception(
-    #            "The variable mvs in the target module is not of type {}.".format(cls.__name__)              )

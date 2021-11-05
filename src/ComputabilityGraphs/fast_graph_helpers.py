@@ -9,7 +9,7 @@ from copy import deepcopy
 from frozendict import frozendict
 from testinfrastructure.helpers import pp, pe
 
-from .TypeSynonyms import Node, Decomp, Computer, ComputerSet
+from .TypeSynonyms import Node, Decomp, Computer
 from . import helpers as h
 from .FastGraph import  FastGraph
 from .Decomposition import Decomposition
@@ -167,30 +167,40 @@ def add_all_arg_set_graphs_to_decomp(
 ]:  
     g_new = deepcopy(g)
     active, passive = decomp
-    all_combies = h.all_computer_combis_for_mvar_set(active,all_computers)
-    # we want to add only nodes that are not supersets of other nodes (we are
-    # interested in a SPARSE graph) but if a computercombi creates a new egde
-    # to an EXISTING node we want to add the edge and therefore have to include
-    # the combi in the call to add_combis_arg_set_graphs_to_decomp
+    # we want to avoid all the nodes on the path from here to the root Node
+    avoid_nodes= g.visited_Nodes_on_paths(
+            src=decomp,
+            root=root
+    )
+    all_combies = h.all_computer_combis_for_mvar_set(
+            var_set=active,
+            all_computers=all_computers,
+            avoid_nodes=avoid_nodes
+    )
 
     def src2node(ss):
         return frozenset.union(ss, passive)
 
     src_sets = frozenset(map(h.combi_arg_set, all_combies))
+    # we want to add only nodes that are not supersets of other nodes (we are
+    # interested in a SPARSE graph) but if a computercombi creates a new egde
+    # to an EXISTING node we want to add the edge and therefore have to include
+    # the combi in the call to add_combis_arg_set_graphs_to_decomp
     src_sets_wo_ss = h.remove_supersets(src_sets)
     src_nodes_wo_ss = frozenset(map(src2node, src_sets_wo_ss))
-    super_sets = frozenset.difference(src_sets, src_sets_wo_ss)
-    print("supersets="+h.nodes_2_string(super_sets))
-    super_set_nodes = frozenset(map(src2node, super_sets))
-    super_set_nodes_already_in_g = frozenset.intersection(
-        g_new.get_Nodes(),
-        super_set_nodes
-    )
-    print("super_set_nodes_alreay_in_G="+h.nodes_2_string(super_set_nodes_already_in_g))
+    #super_sets = frozenset.difference(src_sets, src_sets_wo_ss)
+    #print("supersets="+h.nodes_2_string(super_sets))
+    #super_set_nodes = frozenset(map(src2node, super_sets))
+    #super_set_nodes_already_in_g = frozenset.intersection(
+    #    g_new.get_Nodes(),
+    #    super_set_nodes
+    #)
+    #print("super_set_nodes_alreay_in_G="+h.nodes_2_string(super_set_nodes_already_in_g))
 
     relevant_nodes = frozenset.union(
-        super_set_nodes_already_in_g,
+        #super_set_nodes_already_in_g,
         src_nodes_wo_ss
+        #frozenset(map(src2node, src_sets))
     )
     relevant_combis = frozenset(
         filter(
@@ -217,6 +227,7 @@ def add_arg_set_graphs_to_decomps(
     FrozenSet[Node]
 ]:
     def f(acc, decomp):
+        print(decomp)
         g, new_nodes = acc
         active, passive = decomp
         g_new, combi_new_nodes = add_all_arg_set_graphs_to_decomp(
@@ -322,15 +333,17 @@ def add_all_decompositions_to_all_nodes(
     return g_res, all_new_decompositions
 
 
-
+@lru_cache
 def fast_graph(
         root_type: type,
-        cs: ComputerSet
+        cs: ComputerSet,
+        given: FrozenSet[type]
     ) -> FastGraph:    
     g,new_nodes = last(update_generator(
         root_type,
         cs,
-        max_it=30
+        max_it=30,
+        given=given
     ))
     return g
 
@@ -341,12 +354,16 @@ def last(iterator):
 def update_generator(
         root_type: type,
         cs: ComputerSet,
-        max_it: int
+        max_it: int,
+        given: FrozenSet[type] = frozenset()
     ) -> 'generator':
     
     if max_it < 0:
         raise IndexError("update sequence indices have to be larger than 0")
-    uncomputable = h.uncomputable(cs) 
+    uncomputable = frozenset.union(
+            h.uncomputable(cs),
+            given
+    )
     print('uncomputable='+h.node_2_string(uncomputable))
     
     g, ds= initial_fast_graph(
@@ -436,6 +453,7 @@ def draw_update_sequence(
         computers: ComputerSet,
         max_it: int,
         fig: plt.figure,
+        given: FrozenSet[type] = frozenset(),
         mvar_aliases=frozendict({}),
         computer_aliases=frozendict({})
     ):
@@ -444,7 +462,8 @@ def draw_update_sequence(
         in update_generator(
             root_type,
             computers,
-            max_it=max_it
+            max_it,
+            given
         )
     ]
     print(type(lg[-1]))

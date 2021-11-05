@@ -4,8 +4,9 @@ from copy import deepcopy
 from frozendict import frozendict
 from functools import reduce
 from pygraphviz.agraph import AGraph
-from .TypeSynonyms import Node, Decomp, Computer, ComputerSet
+from .TypeSynonyms import Node, Decomp, Computer
 from .Decomposition import Decomposition
+from .ComputerSet import ComputerSet
 from .helpers import ( 
     equivalent_singlegraphs,
     merge_dicts,
@@ -23,6 +24,27 @@ class FastGraph:
     def __init__(self):
         dg = nx.DiGraph()
         self.dg = dg
+
+    def root(self):
+        dg=self.dg
+        end_nodes = [n for n in  dg.nodes() if dg.out_degree(n)==0]
+        l = len(end_nodes)
+        if l > 1:
+            raise Exception("more than one target node")
+        if len == 0:
+            raise Exception("no target nodes")
+
+        return end_nodes[0]
+        
+
+    def __hash__(self):
+        dg=self.dg
+        return hash(
+            (
+                frozenset(dg.nodes()),
+                frozenset(dg.edges())
+            )
+        )
 
     def __str__(self):
         css_key = self.__class__.css_key

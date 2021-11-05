@@ -1010,7 +1010,7 @@ class TestFastGraph2(InDirTest):
             new_decompositions
         )
 
-
+   
     def test_initial_fast_graph(self):
         computers = self.computers
         g = FastGraph()
@@ -1042,24 +1042,36 @@ class TestFastGraph2(InDirTest):
             new_decompositions,
             new_decompositions_res
         )
+    
+    def test_root(self):
+        computers = frozenset(
+            [
+                a_from_i,
+                b_from_c_d,
+                b_from_e_f,
+                c_from_b,
+                d_from_b,
+                d_from_g_h,
+                e_from_b,
+                f_from_b,
+            ]
+        )
+        ## target A
+        fg_A = fgh.fast_graph(
+            root_type=A,
+            cs=computers,  
+            given=frozenset()
+        )
+        self.assertEqual(
+            fg_A.root(),
+            Node({A})
+        )
 
     def test_manual_sequence(self):
         computers = frozenset({
             tC.b_from_c_d,
             tC.d_from_a
         })
-        #g = FastGraph()
-        #for v in [A, B, C, D]:
-        #    g.add_Node(frozenset([v]))
-
-        #new_decompositions = frozenset(
-        #    [
-        #        (frozenset([v]), frozenset([])) 
-        #        for v in [B, D]
-        #    ]
-        #)
-        #for dn in new_decompositions: 
-        #    g.add_Decomp(dn[0],dn)
         fig = plt.figure(figsize=(20, 20))
         ax1 = fig.add_subplot(6, 1, 1)
         ax2 = fig.add_subplot(6, 1, 2)
@@ -1155,7 +1167,8 @@ class TestFastGraph2(InDirTest):
         graphs = [graph  for (graph, new) in fgh.update_generator(
             root_type=B,
             cs=computers,
-            max_it=max_it
+            max_it=max_it,
+            given=frozenset()
         )]
         fig = plt.figure(figsize=(40, 20))
         fgh.draw_update_sequence(
@@ -1173,7 +1186,8 @@ class TestFastGraph2(InDirTest):
         ax1 = fig.add_subplot(1, 1, 1)
         g_res = fgh.fast_graph(
                 root_type=C,
-                cs=computers
+                cs=computers,
+                given=frozenset()
         )
         g_res.draw_matplotlib(ax1)
         fig.savefig("figure.pdf")
@@ -1198,26 +1212,29 @@ class TestFastGraph3(InDirTest):
         ## target A
         fspsg_A = fgh.project_to_multiDiGraph(
             fgh.fast_graph(
-                        root_type=A,
-                        cs=computers
-                )
+                root_type=A,
+                cs=computers,
+                given=frozenset()
+            )
         )
         
         res_A = minimal_startnodes_for_single_var(fspsg_A, A)
         ### target B
         fspsg_B = fgh.project_to_multiDiGraph(
             fgh.fast_graph(
-                        root_type=B,
-                        cs=computers
-                )
+                root_type=B,
+                cs=computers,
+                given=frozenset()
+            )
         )
         res_B = minimal_startnodes_for_single_var(fspsg_B, B)
         ### target C
         fspsg_C = fgh.project_to_multiDiGraph(
             fgh.fast_graph(
-                        root_type=C,
-                        cs=computers
-                )
+                root_type=C,
+                cs=computers,
+                given=frozenset()
+            )
         )
         res_C = minimal_startnodes_for_single_var(fspsg_C, C)
         

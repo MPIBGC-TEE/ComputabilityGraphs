@@ -52,7 +52,6 @@ class TestRecGraph(InDirTest):
                 )
             ),
             FastGraph()
-            #(FastGraph(),frozenset())
         )
 
     def test_decomp_graph_1(self):

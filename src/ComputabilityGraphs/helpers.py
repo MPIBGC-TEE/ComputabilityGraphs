@@ -6,16 +6,20 @@ import inspect
 from inspect import signature
 from string import ascii_lowercase, ascii_uppercase
 from typing import FrozenSet, Set, Callable, Tuple, List, Any
-from .TypeSynonyms import Node, Decomp, Computer, ComputerSet
+from .TypeSynonyms import Node, Decomp, Computer
+from .ComputerSet import ComputerSet
 
 def all_computer_combis_for_mvar_set(
     var_set: FrozenSet[type],
-    all_computers: ComputerSet
+    all_computers: ComputerSet,
+    avoid_nodes: FrozenSet[Node] = frozenset()
 ) -> FrozenSet[ComputerSet]:
     def f(var):
         return all_computers_for_mvar(
-                var,
-                all_computers)
+            var,
+            all_computers,
+            avoid_nodes
+        )
 
     comp_lists = [list(s) for s in map(f,var_set)]
     comp_tuple_list = list_mult(comp_lists)
@@ -120,9 +124,24 @@ def applicable_computers(
 @lru_cache(maxsize=None)
 def all_computers_for_mvar(
     mvar: type,
-    allComputers: ComputerSet
+    allComputers: ComputerSet,
+    avoid_nodes: FrozenSet[Node] = frozenset()
 ) -> ComputerSet:
-    return frozenset([c for c in allComputers if output_mvar(c) == mvar])
+    return frozenset(
+        [
+            c for c in allComputers 
+            if output_mvar(c) == mvar and not any(
+                [ 
+                    frozenset.issuperset(
+                        input_mvars(c),
+                        an
+                    )
+                    for an in avoid_nodes
+                ]
+
+            ) 
+        ]
+    )
 
 
 def arg_set(computer: Callable) -> FrozenSet[type]:
@@ -149,6 +168,9 @@ def arg_set_set(mvar: type, allComputers: FrozenSet[Callable]) -> FrozenSet[Set[
 
 @lru_cache(maxsize=None)
 def all_mvars(all_computers: FrozenSet[Callable]) -> FrozenSet[type]:
+    # fixme mm 11-04-2021:
+    # rename to all_types
+
     # the set of all mvars is implicitly defined by the
     # parameterlists and return values of the computers
     return reduce(
