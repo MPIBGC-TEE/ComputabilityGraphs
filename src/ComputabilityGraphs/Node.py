@@ -1,5 +1,4 @@
 from frozendict import frozendict
-from .helpers import node_2_string
 from .TypeSet import TypeSet
 
 

@@ -2,6 +2,7 @@ from functools import reduce, lru_cache
 from typing import FrozenSet
 from copy import deepcopy
 from . import helpers as h
+from . str_helpers import nodes_2_string
 from . import  fast_graph_helpers as fgh
 from .FastGraph import FastGraph
 from .Decomposition import Decomposition
@@ -46,7 +47,7 @@ def rec_graph_maker(computers):
             #src_sets = frozenset([a for (c,a) in tups])
             #src_sets_wo_ss = h.remove_supersets(src_sets)
             #super_sets = frozenset.difference(src_sets, src_sets_wo_ss)
-            #print("supersets="+h.nodes_2_string(super_sets))
+            #print("supersets="+nodes_2_string(super_sets))
 
 
             #combiset_argset_tups =[(combis(a),a) for a in src_sets_wo_ss]

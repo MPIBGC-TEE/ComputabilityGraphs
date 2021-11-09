@@ -1,7 +1,7 @@
 #from typing import NamedTuple
 from frozendict import frozendict
 from collections import namedtuple
-from .helpers import varsettuple_2_string
+from .str_helpers import varsettuple_2_string
 from .Node import Node
 
 _decomposition = namedtuple('Decomposition',['active','passive'])

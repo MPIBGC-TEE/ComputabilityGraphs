@@ -4,12 +4,15 @@ from copy import deepcopy
 from frozendict import frozendict
 from functools import reduce
 from pygraphviz.agraph import AGraph
-from .TypeSynonyms import Node, Decomp, Computer
+from .TypeSynonyms import  Computer
 from .Decomposition import Decomposition
+from .Node import Node
 from .ComputerSet import ComputerSet
 from .helpers import ( 
     equivalent_singlegraphs,
     merge_dicts,
+)
+from .str_helpers import ( 
     varset_2_string,
     varsettuple_2_string,
     compset_2_string
@@ -187,14 +190,14 @@ class FastGraph:
 
     def has_Decomp(
             self,
-            decomp: Decomp
+            decomp: Decomposition
         ) -> bool:
         return decomp in self.get_Decomps()
 
     def add_Decomp(
             self,
             targetNode: Node,
-            decomp: Decomp
+            decomp: Decomposition
         ):
         dg = self.dg
         dg.add_node(decomp, bipartite=1)
@@ -202,7 +205,7 @@ class FastGraph:
     
     def add_unconnected_Decomp(
             self,
-            decomp: Decomp
+            decomp: Decomposition
         ):
         dg = self.dg
         dg.add_node(decomp, bipartite=1)

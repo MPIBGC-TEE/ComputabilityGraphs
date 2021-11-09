@@ -5,6 +5,7 @@ import networkx as nx
 import inspect
 
 from . import helpers as ngh
+from . str_helpers import nodes_2_string
 from .graph_helpers import (
     minimal_startnodes_for_single_var
 )
@@ -107,9 +108,9 @@ class CMTVS(frozenset):
             raise (
                 Exception(
                     "The desired t can not be computed from the provided mvars:"
-                    + ngh.node_2_string(pmvs)
+                    + node_2_string(pmvs)
                     + "Minimal sets to compute it are"
-                    + ngh.nodes_2_string(graph_min_nodes)
+                    + nodes_2_string(graph_min_nodes)
                 )
             )
         

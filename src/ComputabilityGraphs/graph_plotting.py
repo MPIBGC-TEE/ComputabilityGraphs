@@ -8,8 +8,10 @@ import numpy as np
 import ComputabilityGraphs.graph_helpers as gh
 import ComputabilityGraphs.fast_graph_helpers as fgh
 from .helpers import (
-    pretty_name,
     merge_dicts,
+)
+from .str_helpers import (
+    pretty_name,
     node_2_string,
     nodes_2_string,
     varset_2_string,

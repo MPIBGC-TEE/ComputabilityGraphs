@@ -7,10 +7,10 @@ from pygraphviz.agraph import AGraph
 from typing import List, Set, Tuple, Callable, FrozenSet
 from copy import deepcopy
 from frozendict import frozendict
-from testinfrastructure.helpers import pp, pe
 
-from .TypeSynonyms import Node, Decomp, Computer
+from .TypeSynonyms import  Computer
 from . import helpers as h
+from .str_helpers import nodes_2_string
 from .FastGraph import  FastGraph
 from .Decomposition import Decomposition
 from .Node import Node
@@ -45,7 +45,7 @@ def combine(
 
 def src_node_computersets_tuples_from_decomp(
         g: FastGraph,
-        d: Decomp
+        d: Decomposition
     )->FrozenSet[Tuple[Node,ComputerSet]]:
     # This functions is necessary for the projection of the FastGraph
     # to the MultiDiGraphs containing no Decomps but only nodes but
@@ -105,7 +105,7 @@ def project_to_multiDiGraph(fg):
 def add_combi_arg_set_graph(
         g: FastGraph,
         root: Node,
-        decomp: Decomp,
+        decomp: Decomposition,
         computer_combi: Set[Computer]
 ) -> Tuple[
     FastGraph,
@@ -140,7 +140,7 @@ def add_combi_arg_set_graph(
 def add_combis_arg_set_graphs_to_decomp(
         g: FastGraph,
         root: Node,
-        decomp: Decomp,
+        decomp: Decomposition,
         computer_combis: FrozenSet[ComputerSet]
 ) -> Tuple[
     FastGraph,
@@ -159,7 +159,7 @@ def add_combis_arg_set_graphs_to_decomp(
 def add_all_arg_set_graphs_to_decomp(
         g: FastGraph,
         root: Node,
-        decomp: Decomp,
+        decomp: Decomposition,
         all_computers
 ) -> Tuple[
     nx.DiGraph,
@@ -189,13 +189,13 @@ def add_all_arg_set_graphs_to_decomp(
     src_sets_wo_ss = h.remove_supersets(src_sets)
     src_nodes_wo_ss = frozenset(map(src2node, src_sets_wo_ss))
     #super_sets = frozenset.difference(src_sets, src_sets_wo_ss)
-    #print("supersets="+h.nodes_2_string(super_sets))
+    #print("supersets="+nodes_2_string(super_sets))
     #super_set_nodes = frozenset(map(src2node, super_sets))
     #super_set_nodes_already_in_g = frozenset.intersection(
     #    g_new.get_Nodes(),
     #    super_set_nodes
     #)
-    #print("super_set_nodes_alreay_in_G="+h.nodes_2_string(super_set_nodes_already_in_g))
+    #print("super_set_nodes_alreay_in_G="+nodes_2_string(super_set_nodes_already_in_g))
 
     relevant_nodes = frozenset.union(
         #super_set_nodes_already_in_g,
@@ -220,7 +220,7 @@ def add_all_arg_set_graphs_to_decomp(
 def add_arg_set_graphs_to_decomps(
         g: nx.DiGraph,
         root: Node,
-        decomps: Set[Decomp],
+        decomps: Set[Decomposition],
         all_computers: FrozenSet[Computer]
 ) -> Tuple[
     nx.DiGraph,
@@ -271,7 +271,7 @@ def add_all_decompositions_to_node(
         g: FastGraph,
         node: Node,
         passive: FrozenSet[Node],
-    ) -> Tuple[FastGraph, FrozenSet[Decomp]]:
+    ) -> Tuple[FastGraph, FrozenSet[Decomposition]]:
     
 
     decompositions_2 = prospective_decomp_list_2(node,passive)
@@ -289,7 +289,7 @@ def add_all_decompositions_to_all_nodes(
         root: Node,
         nodes: FrozenSet[Node],
         uncomputable: FrozenSet[type]
-        ) -> Tuple[FastGraph, FrozenSet[Decomp]]: 
+        ) -> Tuple[FastGraph, FrozenSet[Decomposition]]: 
     g_new = deepcopy(g)
     def f(acc, node):
         g, decompositions = acc
@@ -377,7 +377,7 @@ def update_generator(
         print(counter)
         # first halfstep
         g, ns = add_arg_set_graphs_to_decomps(g, Node({root_type}),ds, cs)
-        print('new_nodes='+h.nodes_2_string(ns))
+        print('new_nodes='+nodes_2_string(ns))
         if ((len(ns) == 0) or (counter > max_it)):
             break
         yield (g, ns)
