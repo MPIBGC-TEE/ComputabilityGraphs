@@ -78,7 +78,6 @@ class CMTVS(frozenset):
 
     def __repr__(self):    
         return self.__class__.__name__+"({" +", ".join(item.__repr__() for item in self ) + "})"
-A({1,2,3})
 
 
     def __getattribute__(self, name):
