@@ -4,7 +4,7 @@ from frozendict import frozendict
 import networkx as nx
 import inspect
 
-from . import helpers as ngh
+from . import helpers as h
 from . str_helpers import nodes_2_string
 from .graph_helpers import (
     minimal_startnodes_for_single_var
@@ -65,16 +65,21 @@ class CMTVS(frozenset):
         return frozenset(type(v) for v in self.provided_mvar_values)
 
     def computable_mvar_types(self) -> Set[type]:
-        return ngh.computable_mvars(
+        return h.computable_mvars(
             allComputers=self.computers,
             available_mvars=self.provided_mvar_types
         )
 
-
+    
     def __dir__(self):
         return super().__dir__() + [
             "get_{}".format(t.__name__) for t in self.computable_mvar_types()
         ]
+
+    def __repr__(self):    
+        return self.__class__.__name__+"({" +", ".join(item.__repr__() for item in self ) + "})"
+A({1,2,3})
+
 
     def __getattribute__(self, name):
         if name.startswith("get_"):
@@ -90,8 +95,6 @@ class CMTVS(frozenset):
             self,
             t: type
         ) -> Dict[type, List[Set[type]]]:
-        # fixme mm 09-15-2020:
-        # should be deprecated since the class MVarSet implements a similar method now
         node = frozenset({t})
         spsg = fgh.project_to_multiDiGraph(
         	graph_maker(
@@ -175,6 +178,6 @@ class CMTVS(frozenset):
                 res = comp(*arg_values)
                 return res
     
-            pv_dict.update({ngh.output_mvar(c): apply(c) for c in computers})
+            pv_dict.update({h.output_mvar(c): apply(c) for c in computers})
     
         return pv_dict[t]
