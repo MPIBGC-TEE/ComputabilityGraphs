@@ -1,6 +1,7 @@
 from typing import Dict, List, Set, TypeVar
 from functools import lru_cache
 from frozendict import frozendict
+from copy import deepcopy
 import networkx as nx
 import inspect
 
@@ -18,10 +19,10 @@ from . import rec_graph_helpers as rgh
 #graph_maker = fgh.fast_graph
 graph_maker = rgh.fast_graph
 
-class CMTVS(frozenset):
+class CMTVS():
     """CMTVS stands for
     (C)onnected(M)ulti(T)ype(V)alue(S)et and is a set of
-    values that all have different ype It is immutable
+    values that all have different type It is immutable
     and supports normal set operations (inherited from
     frozenset) for its variables.  
     The (C)onnection is established by a set of functions with
@@ -46,19 +47,41 @@ class CMTVS(frozenset):
     # that will contain modelruns which will refer to a particular model and
     # just add parameterizations and start values)
     
+    def update(
+            self,
+            other: Set[type]
+    ):
+        """Although an instance of this class is a set, every variable in the set has a unique type. This is very similar to a dictionary where the keys are unique.
+        Accordingly CMTVS objects have an update method like a dictionay. There are however two differences:
+        1.  While the update method of a dictionary takes 
+            a dictionary as an argument, this mehtod takes
+            an iterable and uses the types of the elements
+            implicitly as keys.
+        2.  While the update mehtod of a dictionary changes
+            the object in place, this method returns a copy
+            and leaves the object unchanged.
+        """
 
-    def __new__(
-            cls, 
-	    iterable,
-            computers:ComputerSet,
+        new=deepcopy(self) 
+        new._fd=frozendict(
+            {
+                    **self._fd,  ** { type(el):el for el in other }
+            }
+        )
+        return new
+
+
+    def __init__(
+            self, 
+            iterable,
+            computers
         ):
-        obj=super().__new__(cls,iterable)
-        obj.computers=frozenset(computers)
-        return  obj
+        self._fd = frozendict({type(el): el for el in iterable})
+        self.computers=frozenset(computers)
 
     @property
     def provided_mvar_values(self):
-        return frozenset([i for i in self])
+        return frozenset([i for i in self._fd.values()])
 
     @property
     def provided_mvar_types(self) -> Set[type]:
@@ -77,7 +100,13 @@ class CMTVS(frozenset):
         ]
 
     def __repr__(self):    
-        return self.__class__.__name__+"({" +", ".join(item.__repr__() for item in self ) + "})"
+        el_str = ", ".join( 
+                [
+                    k.__name__ + ' = ' + str(v)
+                    for k,v in self._fd.items()
+                ]
+        )
+        return self.__class__.__name__+"({" + el_str + "})"
 
 
     def __getattribute__(self, name):

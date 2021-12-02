@@ -30,6 +30,17 @@ class TestCMTVS(unittest.TestCase):
             self.provided_values,
             self.computers
         )
+
+    def test_repr(self):
+        print(self.cmtvs)
+
+    def test_update(self):
+        c_new = self.cmtvs.update({H(2)})
+        res = c_new.get_H()
+        #from IPython import embed; embed()
+        #print(cmtvs.computable_mvar_types())
+        #print(cmtvs.__dir__())
+        self.assertEqual(res.v,2)
     
     def test_provided_mvar_values(self):
         self.assertSetEqual(
@@ -39,10 +50,17 @@ class TestCMTVS(unittest.TestCase):
         
 
     def test_provided_mvar_types(self):
+        ref =frozenset(
+                [
+                    type(v) 
+                    for v in self.provided_values
+                ]
+        ) 
+        print(ref)
         self.assertSetEqual(
             self.cmtvs.provided_mvar_types ,
-            frozenset(type(v) for v in self.provided_values)
-    )
+            ref
+        )
         
 
     def test_computable_mvar_types(self):
@@ -80,4 +98,5 @@ class TestCMTVS(unittest.TestCase):
         res = cmtvs._get_single_value(B)
         print(res)
         self.assertEqual(res,B(4))
+
 
