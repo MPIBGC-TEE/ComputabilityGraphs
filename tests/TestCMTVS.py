@@ -1,9 +1,17 @@
+from typing import Callable
 import unittest
+import inspect
+import networkx as nx
+import matplotlib.pyplot as plt
+from copy import copy
+from typing import Dict
+
 from ComputabilityGraphs.CMTVS import CMTVS
 from ComputabilityGraphs.ComputerSet import ComputerSet
 from ComputabilityGraphs.Node import Node
 
 from ComputabilityGraphs import helpers as h
+from ComputabilityGraphs import dep_graph_helpers as dgh
 
 from testComputers import (
     B, C, D, E, F, G, H, 
@@ -100,3 +108,28 @@ class TestCMTVS(unittest.TestCase):
         self.assertEqual(res,B(4))
 
 
+    def test_get_single_value_by_depgraph(self):
+        
+        cmtvs = self.cmtvs
+        g=dgh.dep_graph(
+            root_type=B,
+            cs=cmtvs.computers,
+            given=cmtvs.provided_mvar_types
+        )
+
+        self.assertEqual( 
+            cmtvs._get_single_value_by_depgraph(E),
+            E(1)
+        )
+        
+        # now get a variable that is not provided directly but computable in one step
+        self.assertEqual( 
+            cmtvs._get_single_value_by_depgraph(C),
+            C(2)
+        )
+        #self.assertEqual(res,C(2)) 
+        # now get a variable that is not provided directly but computable in two steps
+        self.assertEqual( 
+            cmtvs._get_single_value_by_depgraph(B),
+            B(4)
+        )

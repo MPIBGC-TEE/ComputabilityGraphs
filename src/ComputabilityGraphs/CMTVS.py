@@ -1,9 +1,12 @@
-from typing import Dict, List, Set, TypeVar
+import networkx as nx
+import inspect
+
+from typing import Dict, List, Set, TypeVar, Callable
 from functools import lru_cache
 from frozendict import frozendict
 from copy import deepcopy
-import networkx as nx
-import inspect
+from copy import copy
+from functools import reduce
 
 from . import helpers as h
 from . str_helpers import nodes_2_string
@@ -13,6 +16,7 @@ from .graph_helpers import (
 from .ComputerSet import ComputerSet
 from . import fast_graph_helpers as fgh
 from . import rec_graph_helpers as rgh
+from . import dep_graph_helpers as dgh
 
 # choose which implementation to use
 # at the moment rgh is much faster
@@ -153,16 +157,10 @@ class CMTVS():
         )
         return path_dict
 
-    def _get_single_value(
+    def _get_single_value_by_depgraph(
             self,
             t: type,
-            path: List[Set[type]] = []
         ):  # ->t:
-        # fixme mm 03-07-2020:
-        # This is interesting: The function actually returns
-        # an instance of class t, I do not know yet how to express that with
-        # the static type hint system.
-        # (Obviously the return type  is a function of the input types)
     
         pvs = self.provided_mvar_values
         pv_dict = {type(v): v for v in pvs}
@@ -170,42 +168,34 @@ class CMTVS():
         if t in [type(v) for v in pvs]:
             return pv_dict[t]
     
-        path_dict = self.path_dict_to_single_mvar(t)
-        start_nodes = path_dict.keys()
-    
-        if path == []:
-            default_start_node = sorted(start_nodes, key=lambda node: len(node))[0]
-            path = path_dict[default_start_node][0]
-        else:
-            # check if the given path is among the possible paths
-            start_node = path[0]
-            if start_node not in path_dict.keys():
-                raise (Exception("There are no paths to the target with this startnode"))
-            starting_here = path_dict[start_node]
-            if not path in starting_here:
-                raise (Exception("the given path is not possible"))
-    
         # create results step by step along the graph
-        spsg = fgh.project_to_multiDiGraph(
-        	graph_maker(
-        		root_type=t,
-        		cs=self.computers,
-                        given=self.provided_mvar_types
-        	)
+        g = dgh.dep_graph(
+            root_type=t,
+            cs=self.computers,
+            given=self.provided_mvar_types
         )
-        rg = spsg.subgraph(path).copy()
-        rg.nodes[path[0]]["values"] = pvs
-        for i in range(1, len(path)):
-            computers = rg.get_edge_data(path[i - 1], path[i])[0][
-                "computers"
-            ]  # [0] if we have more than one computerset take the first one
-          
-            def apply(comp):
-                arg_classes = [p.annotation for p in inspect.signature(comp).parameters.values()]
-                arg_values = [pv_dict[cl] for cl in arg_classes]
-                res = comp(*arg_values)
-                return res
-    
-            pv_dict.update({h.output_mvar(c): apply(c) for c in computers})
-    
+
+        rg=copy(g).reverse()
+        # compute the order of computations
+        computations=nx.topological_sort(rg)
+
+        # initialize the set of values to start from
+        pvs = self.provided_mvar_values
+
+        def apply(
+                acc: Dict, 
+                comp: Callable
+        )->Dict:
+            arg_classes = [p.annotation for p in inspect.signature(comp).parameters.values()]
+            arg_values = [acc[cl] for cl in arg_classes]
+            res=copy(acc)
+            res.update({h.output_mvar(comp): comp(*arg_values)})
+            return res
+        
+        pv_dict=reduce(
+                apply,
+                computations,
+                {type(v): v for v in pvs}
+        )
+        
         return pv_dict[t]
