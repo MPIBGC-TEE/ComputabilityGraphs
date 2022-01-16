@@ -228,7 +228,7 @@ class CMTVS():
             return pv_dict[t]
     
         # create results step by step along the graph
-        g = dgh.dep_graph(
+        g = dgh.shortest_computable_dep_graph(
             root_type=t,
             cs=self.computers,
             given=self.provided_mvar_types

@@ -14,7 +14,7 @@ from ComputabilityGraphs import helpers as h
 from ComputabilityGraphs import dep_graph_helpers as dgh
 
 from testComputers import (
-    B, C, D, E, F, G, H, 
+    A, B, C, D, E, F, G, H,
     a_from_i,
     a_from_b_c,
     b_from_c_d,
@@ -46,9 +46,6 @@ class TestCMTVS(unittest.TestCase):
     def test_update(self):
         c_new = self.cmtvs.update({H(2)})
         res = c_new.get_H()
-        #from IPython import embed; embed()
-        #print(cmtvs.computable_mvar_types())
-        #print(cmtvs.__dir__())
         self.assertEqual(res.v,2)
     
     def test_provided_mvar_values(self):

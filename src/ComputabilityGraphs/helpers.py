@@ -178,8 +178,7 @@ def all_mvars(all_computers: FrozenSet[Callable]) -> FrozenSet[type]:
 
     # the set of all mvars is implicitly defined by the
     # parameterlists and return values of the computers
-    return union(
-            all_output_types(all_computers),
+    return all_output_types(all_computers).union(
             all_input_types(all_computers)
     )
 
