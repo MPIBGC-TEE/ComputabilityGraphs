@@ -7,46 +7,85 @@ import ComputabilityGraphs.helpers as h
 import networkx as nx
 from networkx.classes.function import edges
 
-from testComputers import (
-    B, C, D, E, F, G, H, 
-    a_from_i,
-    b_from_c_d,
-    c_from_e_f,
-    d_from_g_h,
-)
+class DepGraph(nx.DiGraph):
+    def __eq__(self, other):
+        return (
+            self.nodes == other.nodes and
+            self.edges == other.edges
+        )
+
+
+    def draw_matplotlib(self,ax):
+        gg=nx.DiGraph()
+        gg.add_edges_from(
+            map(
+                lambda t: (t[0].__name__,t[1].__name__)
+                ,self.edges()
+            )
+        )
+        gg.add_nodes_from(
+            map(
+                lambda f: f.__name__
+                ,self.nodes()
+            )
+        )
+        nx.draw_networkx(gg,ax=ax,pos=nx.kamada_kawai_layout(gg))
+
+
+    def required_mvars(self):
+        leaf_comps = [n for n in self.nodes if self.out_degree(n) == 0]
+        return reduce(
+                lambda acc,comp: acc.union(h.input_mvars(comp)),
+                leaf_comps,
+                frozenset({})
+        )
+    
+
+    def __hash__(self):
+        return hash(
+            (
+                frozenset(self.nodes()),
+                frozenset(self.edges())
+            )
+        )
+
 
 def dep_graph(
         root_type: type,
         cs, #: Computerset,
         given: List[type] 
-    ) -> nx.DiGraph:
+    ) -> DepGraph:
     
     # create a graph with the computers as nodes
     # so the nodes do not need to be added  as leafs (one step less)
     
     comp_root = [c for c in cs if h.output_mvar(c) == root_type]
     if comp_root ==[]:
-        return nx.DiGraph()
+        return DepGraph()
     else:
         css= cs.difference(given.union(comp_root))
         g = sub_graph( comp_root, css)
         return g
 
+
+
 def sub_graph(
         comp_root: List[Callable],
         cs
-    ) -> nx.DiGraph:
+    ) -> DepGraph:
 
-    g=nx.DiGraph()
-    g.add_node(comp_root[0])
+    g=DepGraph()
+    root_computer=comp_root[0]
+    g.add_node(root_computer)
     
-    params = [ p.annotation for p in signature(comp_root[0]).parameters.values()]
+    params = [ p.annotation for p in signature(root_computer).parameters.values()]
 
     def addsubgraph(g,param):
         gn=copy(g)
         cp = [c for c in cs if h.output_mvar(c) == param]
         if len(cp)>0:
-            gn.add_edge(comp_root[0],cp[0])
+            param_computer = cp[0]
+            gn.add_edge(root_computer, param_computer)
             css = cs.difference(cp) 
             sg = sub_graph(cp,css)
             gn.add_edges_from(sg.edges)
@@ -62,19 +101,42 @@ def sub_graph(
     return res
         
 
-def draw_matplotlib(g,ax):
-    gg=nx.DiGraph()
-    gg.add_edges_from(
-        map(
-            lambda t: (t[0].__name__,t[1].__name__)
-            ,g.edges()
-        )
-    )
-    gg.add_nodes_from(
-        map(
-            lambda f: f.__name__
-            ,g.nodes()
-        )
-    )
-    nx.draw_networkx(gg,ax=ax)
 
+def computer_list_for_mvar(mvar, all_computers):
+    return [ comp for comp in all_computers if h.output_mvar(comp) == mvar ] 
+
+
+def computer_combies(cs,given):
+    # dependency graphs in the sense of this module  only work if there
+    # is only one possibility to compute a given variable.
+    # If there is a variable with more than one computer yielding it,
+    # we get alternative dep graphs.
+    # We can compute a variable if one of the dep graphs is computable 
+    # with the given values.
+    # This function finds all the given  unique computersets.
+
+    
+    comp_lists = [computer_list_for_mvar(var,cs) for  var in h.all_output_types(cs).difference(given)]
+    return h.list_mult(comp_lists)
+    
+def all_dep_graphs(root_type,cs,given):
+    return map(
+            lambda combi:dep_graph(root_type,frozenset(combi),given),
+            computer_combies(cs,given)
+    )
+
+
+def computable_dep_graphs(root_type,cs,given):
+    res = filter(
+        lambda g: g.required_mvars().issubset(given),
+        all_dep_graphs(root_type,cs,given)
+    )
+    #from IPython import embed; embed()
+    return res
+
+
+def shortest_computable_dep_graph(root_type,cs,given):
+    return sorted(
+        computable_dep_graphs(root_type,cs,given),
+        key=lambda g: len(g.edges)
+    )[0]

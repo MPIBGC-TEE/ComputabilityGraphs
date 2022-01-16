@@ -6,6 +6,8 @@ import inspect
 from inspect import signature
 from string import ascii_lowercase, ascii_uppercase
 from typing import FrozenSet, Set, Callable, Tuple, List, Any
+
+from networkx.algorithms.operators.binary import union
 from .TypeSynonyms import  Computer
 from .ComputerSet import ComputerSet
 from .Node import Node
@@ -176,13 +178,25 @@ def all_mvars(all_computers: FrozenSet[Callable]) -> FrozenSet[type]:
 
     # the set of all mvars is implicitly defined by the
     # parameterlists and return values of the computers
-    return reduce(
-        lambda acc, c: acc.union(input_mvars(c), {output_mvar(c)}),
-        all_computers,
-        frozenset({}),
+    return union(
+            all_output_types(all_computers),
+            all_input_types(all_computers)
     )
 
 
+def all_output_types(all_computers: FrozenSet[Callable]) -> FrozenSet[type]:
+    return reduce(
+        lambda acc, c: acc.union({output_mvar(c)}),
+        all_computers,
+        frozenset({})
+    )
+
+def all_input_types(all_computers: FrozenSet[Callable]) -> FrozenSet[type]:
+    return reduce(
+        lambda acc, c: acc.union(input_mvars(c)),
+        all_computers,
+        frozenset({})
+    )
 
 # synonym for arg_set
 def input_mvars(computer: Callable) -> FrozenSet[type]:

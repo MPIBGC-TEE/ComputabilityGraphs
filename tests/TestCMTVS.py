@@ -16,6 +16,7 @@ from ComputabilityGraphs import dep_graph_helpers as dgh
 from testComputers import (
     B, C, D, E, F, G, H, 
     a_from_i,
+    a_from_b_c,
     b_from_c_d,
     c_from_e_f,
     d_from_g_h,
@@ -32,7 +33,7 @@ class TestCMTVS(unittest.TestCase):
             a_from_i,
             b_from_c_d,
             c_from_e_f,
-            d_from_g_h,
+            d_from_g_h
         }
         self.cmtvs=CMTVS(
             self.provided_values,
@@ -111,11 +112,6 @@ class TestCMTVS(unittest.TestCase):
     def test_get_single_value_by_depgraph(self):
         
         cmtvs = self.cmtvs
-        g=dgh.dep_graph(
-            root_type=B,
-            cs=cmtvs.computers,
-            given=cmtvs.provided_mvar_types
-        )
 
         self.assertEqual( 
             cmtvs._get_single_value_by_depgraph(E),
@@ -132,4 +128,27 @@ class TestCMTVS(unittest.TestCase):
         self.assertEqual( 
             cmtvs._get_single_value_by_depgraph(B),
             B(4)
+        )
+        # now we create a situation where there are more than one possible depgraph
+        # because there is a variable with are more than one computers providing it. 
+        computers={
+            a_from_i,
+            a_from_b_c, 
+            b_from_c_d,
+            c_from_e_f,
+            d_from_g_h
+        }
+        provided_values = {
+            E(1),
+            F(1),
+            G(1),
+            H(1)
+        }
+        cmtvs = CMTVS(
+            provided_values,
+            computers
+        )
+        self.assertEqual( 
+            cmtvs._get_single_value_by_depgraph(A),
+            A(6)
         )

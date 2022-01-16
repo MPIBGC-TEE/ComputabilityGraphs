@@ -101,7 +101,7 @@ class Z:
 
 
 def a_from_b_c(b: B, c: C) -> A:
-    return A()
+    return A(b.v+c.v)
 
 
 def a_from_b_d(b: B, d: D) -> A:
