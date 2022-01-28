@@ -111,8 +111,27 @@ class TestDepGraphs(InDirTest):
         g_res.draw_matplotlib(ax2)
         fig.savefig("dep_graph_a(b,c).pdf")
         self.assertEqual(g_res,g_ref)
-        self.assertEqual(g_res.edges, g_ref.edges)
     
+    def test_dep_graph_3(self):
+        cs=ComputerSet({
+            a_from_i
+        })
+        given={E, F, G, H}
+        g_res = dgh.dep_graph(
+            root_type=A,
+            cs=cs,
+            given=given
+        )
+    
+        g_ref = dgh.DepGraph()
+        g_ref.add_node(a_from_i)
+
+        fig=plt.figure();
+        ax1,ax2 = fig.subplots(2,1)
+        g_ref.draw_matplotlib(ax1)
+        g_res.draw_matplotlib(ax2)
+        fig.savefig("dep_graph_a(i).pdf")
+        self.assertEqual(g_res,g_ref)
 
     def test_required_mvars(self):
         g = dgh.DepGraph()
@@ -275,4 +294,27 @@ class TestDepGraphs(InDirTest):
         self.assertEqual( res, g_ref_1)
 
 
+    def test_computer_dict(self):
+        cs = frozenset({
+            a_from_i,
+            a_from_b_c, 
+            b_from_c_d,
+            c_from_e_f,
+            d_from_g_h
+        })
+        cd = dgh.computer_dict(cs)
+        self.assertEqual(len(cd[A]),2)
+        
 
+    def test_duplicated_computer_dict(self):
+        cs = frozenset({
+            a_from_i,
+            a_from_b_c, 
+            b_from_c_d,
+            c_from_e_f,
+            d_from_g_h
+        })
+        dcd = dgh.duplicated_computer_dict(cs)
+        self.assertEqual(list(dcd.keys()),[A])
+        
+    

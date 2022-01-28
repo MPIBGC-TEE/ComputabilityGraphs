@@ -59,8 +59,8 @@ def dep_graph(
     # create a graph with the computers as nodes
     # so the nodes do not need to be added  as leafs (one step less)
     
-    comp_root = [c for c in cs if h.output_mvar(c) == root_type]
-    if comp_root ==[]:
+    comp_root = tuple([c for c in cs if h.output_mvar(c) == root_type])
+    if len(comp_root) == 0:
         return DepGraph()
     else:
         css= cs.difference(given.union(comp_root))
@@ -68,7 +68,7 @@ def dep_graph(
         return g
 
 
-
+@lru_cache
 def sub_graph(
         comp_root: List[Callable],
         cs
@@ -78,11 +78,11 @@ def sub_graph(
     root_computer=comp_root[0]
     g.add_node(root_computer)
     
-    params = [ p.annotation for p in signature(root_computer).parameters.values()]
+    params = tuple([ p.annotation for p in signature(root_computer).parameters.values()])
 
     def addsubgraph(g,param):
         gn=copy(g)
-        cp = [c for c in cs if h.output_mvar(c) == param]
+        cp = tuple([c for c in cs if h.output_mvar(c) == param])
         if len(cp)>0:
             param_computer = cp[0]
             gn.add_edge(root_computer, param_computer)
@@ -136,7 +136,24 @@ def computable_dep_graphs(root_type,cs,given):
 
 
 def shortest_computable_dep_graph(root_type,cs,given):
-    return sorted(
-        computable_dep_graphs(root_type,cs,given),
-        key=lambda g: len(g.edges)
-    )[0]
+    cgs=tuple(computable_dep_graphs(root_type,cs,given))
+    if len(cgs)>0: 
+        return sorted(
+            computable_dep_graphs(
+                root_type,
+                cs,
+                given
+            ),
+            key=lambda g: len(g.edges)
+        )[0] 
+    else:
+        raise Exception("This variable can not computed from the given values")
+
+
+def computer_dict(cs):
+    return {var: computer_list_for_mvar(var,cs) for  var in h.all_output_types(cs)}
+
+
+def duplicated_computer_dict(cs):
+    cd=computer_dict(cs)
+    return { k:v for k,v in cd.items() if len(v)>1}
