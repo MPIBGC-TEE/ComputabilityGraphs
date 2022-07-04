@@ -2,6 +2,38 @@ from pygraphviz.agraph import AGraph
 from typing import Callable
 from functools import reduce
 from frozendict import frozendict
+from bokeh.plotting import figure
+from bokeh.models import (
+    BoxSelectTool,
+    HoverTool,
+    TapTool,
+    ColumnDataSource,
+    LabelSet,
+#)
+#from bokeh.models import (
+    Ellipse,
+    GraphRenderer,
+    StaticLayoutProvider,
+    BoxSelectTool,
+    Circle,
+    EdgesAndLinkedNodes,
+    EdgesOnly,
+    NodesOnly,
+    HoverTool,
+    MultiLine,
+    NodesAndLinkedEdges,
+    Plot,
+    Range1d,
+    TapTool,
+    ColumnDataSource,
+    Label,
+    LabelSet,
+    Range1d
+)
+from bokeh.palettes import Spectral4,Cividis256
+from bokeh.palettes import Spectral4,Cividis256
+from functools import reduce
+from typing import List,Tuple
 import networkx as nx
 import numpy as np
 
@@ -18,6 +50,9 @@ from .str_helpers import (
     varsettuple_2_string,
     compset_2_string
 )
+from .ComputerSet import ComputerSet
+from .ComputerSetSet import ComputerSetSet
+from . import bokeh_helpers as bh 
 
 
 def draw_sequence(fig, tups):
@@ -250,6 +285,138 @@ def draw_ComputerSetMultiDiGraph_matplotlib(
     mvar_aliases_inv = {val: key for key, val in mvar_aliases.items()}
     for i, k in enumerate(sorted(mvar_aliases_inv.keys())):
         ax.text(0, 0 - i / len(mvar_aliases), k + ": " + mvar_aliases_inv[k])
+
+
+
+
+def bokeh_plot(G: nx.MultiDiGraph):
+    
+    # G is a MultiDiGraph ( n directed edges between 2 nodes)
+    # Edges are represented as triplets (sourc,target,ind) for ind in range(n))
+    e_tuples=set([(s,t) for s,t,ind in G.edges])
+    # We will first transform it into a DiGraph 
+    g=nx.DiGraph()
+    for e in e_tuples:
+        src,target=e
+        # G.get_edge_data(s,t) yields a dict of lenght n  of tuples of (ind, edgedata)
+        # we get rid of the ind part and create a set of computersets
+        t=G.get_edge_data(src,target)
+        #from IPython import embed;embed()
+        css=ComputerSetSet([ComputerSet(d['computers'])  for ind,d in t.items()])
+        g.add_edge(src,target,computerSetSet=css)
+
+
+        
+
+    gs=nx.DiGraph()
+    # having projected the MultiDigraph G to the DiGraph g
+    # we stringify g by converting all attr to string and all
+    for n in g.nodes:
+        gs.add_node(node_2_string(n))
+
+
+    attr_key='computerSetSet'
+    for e in g.edges:
+        src, target = e
+        css = g.get_edge_data(src, target)[attr_key] #this is a tupel (one element per edge between 
+        new_edge=(
+            node_2_string(src), 
+            node_2_string(target)
+        )
+        gs.add_edge(
+            *new_edge
+        )
+        gs.get_edge_data(*new_edge).update({attr_key:str(css)})
+
+    plot = figure(title="Computability Graphs")
+    #node_hover_tool = HoverTool(tooltips=[("index", "$index"), ("start","@start"),("end","@end"),("test","@test")])
+    node_hover_tool = HoverTool(tooltips=[("start","@start"),("end","@end"),(attr_key, "@"+attr_key)])
+    plot.add_tools(node_hover_tool, TapTool(), BoxSelectTool())
+    layout=nx.spring_layout
+    graph_layout = layout(gs)
+    names= list(graph_layout.keys())
+    source = ColumnDataSource(
+            data=dict(
+                xs=[graph_layout[n][0] for n in names],
+                ys=[graph_layout[n][1] for n in names],
+                names=names 
+            )
+    )
+    labels = LabelSet(
+            x='xs', 
+            y='ys', 
+            text='names',
+            x_offset=-15, 
+            y_offset=-15, 
+            source=source, 
+            border_line_color='black',
+            background_fill_color='white',
+            render_mode='canvas'
+    )
+
+    #graph = from_networkx(gs, graph_layout, scale=1, center=(0,0))
+    node_dict = dict()
+    node_dict['index'] = list(gs.nodes())
+    N=gs.number_of_nodes()
+    node_dict['color'] = Cividis256[:N]
+    n_steps=100
+
+    steps = [i/float(n_steps) for i in range(n_steps)]
+
+    graph_renderer = GraphRenderer()
+
+    node_keys = graph_renderer.node_renderer.data_source.data['index']
+
+    # Convert edge attributes
+    edge_dict = dict()
+
+    attr_key='computerSetSet'
+    values = [edge_attr[attr_key] if attr_key in edge_attr.keys() else None
+              for _, _, edge_attr in gs.edges(data=True)]
+
+    edge_dict[attr_key] = values
+
+    edge_dict['start'] = [x[0] for x in gs.edges()]
+    edge_dict['end'] = [x[1] for x in gs.edges()]
+    edge_dict['test'] = values
+    
+    xs_ys=[ 
+        bh.double_bezier(
+            start_point=graph_layout[sp],
+            end_point=graph_layout[ep],
+            #control_vector=(1,1),
+            control_vector=(0.1,0.1),
+            steps=steps
+        )
+        for (sp,ep) in gs.edges()
+    ]    
+    edge_dict['xs'] = [x for x,y in xs_ys]
+    edge_dict['ys'] = [y for x,y in xs_ys]
+
+
+    graph_renderer.node_renderer.data_source.data = node_dict
+    graph_renderer.edge_renderer.data_source.data = edge_dict
+
+    graph_renderer.layout_provider = StaticLayoutProvider(graph_layout=graph_layout)
+    #graph_renderer.node_renderer.glyph = Circle(size=15, fill_color=Spectral4[0])
+    graph_renderer.node_renderer.glyph = Circle(size=10, fill_color='color')
+    graph_renderer.node_renderer.selection_glyph = Circle(size=15, fill_color=Spectral4[2])
+    graph_renderer.node_renderer.hover_glyph = Circle(size=25, fill_color=Spectral4[1])
+    
+    graph_renderer.edge_renderer.glyph = MultiLine(line_color="#CCCCCC", line_alpha=0.8, line_width=5)
+    graph_renderer.edge_renderer.selection_glyph = MultiLine(line_color=Spectral4[2], line_width=5)
+    graph_renderer.edge_renderer.hover_glyph = MultiLine(line_color=Spectral4[1], line_width=5)
+    
+    graph_renderer.inspection_policy = EdgesAndLinkedNodes()
+    #graph_renderer.selection_policy = NodesAndLinkedEdges()
+    #graph_renderer.inspection_policy = EdgesOnly()
+    #graph_renderer.inspection_policy = NodesOnly()
+    #graph_renderer.inspection_policy = NodesAndLinkedEdges()
+    
+    
+    plot.renderers.append(graph_renderer)
+    plot.add_layout(labels)
+    return plot
 
 
 def AGraphComputerSetMultiDiGraph(spsg: nx.MultiDiGraph, cf: Callable) -> AGraph:
