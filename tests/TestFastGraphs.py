@@ -78,6 +78,7 @@ class TestFastGraph(InDirTest):
             ax1,
         )
         fig.savefig("figure.pdf")
+        plt.close(fig)
 
     def test_draw_only_nodes(self):
         # test empty graph
@@ -91,6 +92,7 @@ class TestFastGraph(InDirTest):
             ax1,
         )
         fig.savefig("figure.pdf")
+        plt.close(fig)
     
     def test_draw(self):
         # test empty graph
@@ -108,6 +110,7 @@ class TestFastGraph(InDirTest):
             ax1,
         )
         fig.savefig("figure.pdf")
+        plt.close(fig)
 
     def test_src_node_computersets_tuples_from_decomp(self):
         # var set
@@ -155,6 +158,7 @@ class TestFastGraph(InDirTest):
                 (sn10,css10) ,(sn11,css11)
             ])
         ) 
+        plt.close(fig)
 
 
 
@@ -255,6 +259,7 @@ class TestFastGraph(InDirTest):
                tn11
             ])
         ) 
+        plt.close(fig)
 
     def test_nodes_on_paths(self):
         g = FastGraph()
@@ -318,6 +323,7 @@ class TestFastGraph(InDirTest):
             res_n,
             frozenset({Node({B}),Node({C,D})})
         )
+        plt.close(fig)
 
 
     def test_project(self):
@@ -418,6 +424,7 @@ class TestFastGraph(InDirTest):
             G
         )
         fig.savefig("figure.pdf")
+        plt.close(fig)
 
 class TestFastGraph1(InDirTest):
 
@@ -481,6 +488,7 @@ class TestFastGraph1(InDirTest):
         fig.savefig("figure.pdf")
         self.assertEqual(G, G_ref)
         self.assertEqual(new_set, frozenset({sn11}))
+        plt.close(fig)
 
     def test_add_arg_set_overlapping(self):
         # var set
@@ -531,6 +539,7 @@ class TestFastGraph1(InDirTest):
         fig.savefig("figure.pdf")
         self.assertEqual(G, G_ref)
         self.assertEqual(new_set, frozenset({}))
+        plt.close(fig)
 
     def test_add_combis_arg_set_graphs(self):
         # var set
@@ -578,6 +587,7 @@ class TestFastGraph1(InDirTest):
         fig.savefig("figure.pdf")
         self.assertEqual(G, G_ref)
         self.assertEqual(new_set, frozenset({sn11}))
+        plt.close(fig)
 
     def test_all_computer_combis_for_mvar_set(self):
         computers = frozenset([
@@ -663,6 +673,7 @@ class TestFastGraph1(InDirTest):
                     sn13
                 })
         )
+        plt.close(fig)
 
     def test_add_all_arg_set_graphs_to_decomp_2(self):
         # var set
@@ -732,6 +743,7 @@ class TestFastGraph1(InDirTest):
                     sn13
                 })
         )
+        plt.close(fig)
 
     def test_add_decompositions_arg_set_graphs(self):
 
@@ -838,6 +850,7 @@ class TestFastGraph1(InDirTest):
             new_nodes_ref,
             new_nodes_res
         )
+        plt.close(fig)
 
 class TestFastGraph2(InDirTest):   
 
@@ -930,6 +943,7 @@ class TestFastGraph2(InDirTest):
             decompositions,
             new_decompositions
         )
+        plt.close(fig)
 
     def test_add_all_decompositions_to_node_with_uncomputables(self):
         g_base = FastGraph()
@@ -1009,6 +1023,7 @@ class TestFastGraph2(InDirTest):
             decompositions,
             new_decompositions
         )
+        plt.close(fig)
 
    
     def test_initial_fast_graph(self):
@@ -1128,6 +1143,7 @@ class TestFastGraph2(InDirTest):
         )
         g_res6.draw_matplotlib(ax6)
         fig.savefig("figure.pdf")
+        plt.close(fig)
 
         
     def test_add_all_decompositions_to_all_nodes(self):
@@ -1153,6 +1169,7 @@ class TestFastGraph2(InDirTest):
         g_res.draw_matplotlib(ax3)
         
         fig.savefig("figure.pdf")
+        plt.close(fig)
         
         
     def test_update_generator(self):
@@ -1178,6 +1195,7 @@ class TestFastGraph2(InDirTest):
             fig=fig
         )   
         fig.savefig("figure.pdf")
+        plt.close(fig)
 
 
     def test_to_Agraph(self):
@@ -1194,6 +1212,7 @@ class TestFastGraph2(InDirTest):
         A=g_res.to_AGraph()
         A.layout("neato")
         A.draw('A.ps') 
+        plt.close(fig)
     
 class TestFastGraph3(InDirTest):
     def test_minimal_startnodes_for_single_var(self):
@@ -1239,24 +1258,32 @@ class TestFastGraph3(InDirTest):
         res_C = minimal_startnodes_for_single_var(fspsg_C, C)
         
         # plot
-        fig = plt.figure(figsize=(15, 45))
-        axs = fig.subplots(3, 1)
+        fig = plt.figure()
+        ax = fig.subplots(1, 1)
         draw_ComputerSetMultiDiGraph_matplotlib(
-            axs[0],
+            ax,
             fspsg_A,
             targetNode=Node({A})
         )
+        fig.savefig("A.pdf"); plt.close(fig)
+
+        fig = plt.figure()
+        ax = fig.subplots(1, 1)
         draw_ComputerSetMultiDiGraph_matplotlib(
-            axs[1],
+            ax,
             fspsg_B,
             targetNode=Node({B})
         )
+        fig.savefig("B.pdf"); plt.close(fig)
+
+        fig = plt.figure()
+        ax = fig.subplots(1, 1)
         draw_ComputerSetMultiDiGraph_matplotlib(
-            axs[2],
+            ax,
             fspsg_C,
             targetNode=Node({C})
         )
-        fig.savefig("figure.pdf")
+        fig.savefig("C.pdf"); plt.close(fig)
 
 
 

@@ -58,12 +58,15 @@ def dep_graph(
     
     # create a graph with the computers as nodes
     # so the nodes do not need to be added  as leafs (one step less)
+
+    # find the computers that are not useful since they would compute variables alreday given  
+    comps_given=tuple([c for c in cs if h.output_mvar(c) in given])
     
     comp_root = tuple([c for c in cs if h.output_mvar(c) == root_type])
     if len(comp_root) == 0:
         return DepGraph()
     else:
-        css= cs.difference(given.union(comp_root))
+        css= cs.difference(given.union(comp_root,comps_given))
         g = sub_graph( comp_root, css)
         return g
 

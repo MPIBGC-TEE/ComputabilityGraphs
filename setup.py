@@ -35,6 +35,7 @@ setup(
         "testinfrastructure",  # also on https://github.com/MPIBGC-TEE/testinfrastructure.githttps://github.com/MPIBGC-TEE/testinfrastructure.git
         "networkx",
         "pygraphviz",
+        "bokeh"
     ],
         include_package_data=True,
         zip_safe=False

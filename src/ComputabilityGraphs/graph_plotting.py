@@ -289,7 +289,10 @@ def draw_ComputerSetMultiDiGraph_matplotlib(
 
 
 
-def bokeh_plot(G: nx.MultiDiGraph):
+def bokeh_plot(
+        G: nx.MultiDiGraph,
+        targetNode=None
+    ):
     
     # G is a MultiDiGraph ( n directed edges between 2 nodes)
     # Edges are represented as triplets (sourc,target,ind) for ind in range(n))
@@ -328,13 +331,21 @@ def bokeh_plot(G: nx.MultiDiGraph):
         )
         gs.get_edge_data(*new_edge).update({attr_key:str(css)})
 
-    plot = figure(title="Computability Graphs")
+    plot = figure(
+            title="Computability Graphs",
+            #plot_width=1700,
+            #plot_height=550
+    )
+    plot.sizing_mode="scale_width"
     #node_hover_tool = HoverTool(tooltips=[("index", "$index"), ("start","@start"),("end","@end"),("test","@test")])
     node_hover_tool = HoverTool(tooltips=[("start","@start"),("end","@end"),(attr_key, "@"+attr_key)])
     plot.add_tools(node_hover_tool, TapTool(), BoxSelectTool())
     layout=nx.spring_layout
-    graph_layout = layout(gs)
+    Graph_Layout = layout(G)
+    #graph_layout = layout(gs)
+    graph_layout = {node_2_string(k):v for k,v in Graph_Layout.items()}
     names= list(graph_layout.keys())
+    #names= [str(k) for k in graph_layout.keys()]
     source = ColumnDataSource(
             data=dict(
                 xs=[graph_layout[n][0] for n in names],
@@ -354,7 +365,6 @@ def bokeh_plot(G: nx.MultiDiGraph):
             render_mode='canvas'
     )
 
-    #graph = from_networkx(gs, graph_layout, scale=1, center=(0,0))
     node_dict = dict()
     node_dict['index'] = list(gs.nodes())
     N=gs.number_of_nodes()
@@ -381,11 +391,16 @@ def bokeh_plot(G: nx.MultiDiGraph):
     edge_dict['test'] = values
     
     xs_ys=[ 
-        bh.double_bezier(
+        #bh.double_bezier(
+        #    start_point=graph_layout[sp],
+        #    end_point=graph_layout[ep],
+        #    #control_vector=(1,1),
+        #    control_vector=(1e-4,1e-4),
+        #    steps=steps
+        #)
+        bh.double_straight(
             start_point=graph_layout[sp],
             end_point=graph_layout[ep],
-            #control_vector=(1,1),
-            control_vector=(0.1,0.1),
             steps=steps
         )
         for (sp,ep) in gs.edges()
@@ -414,8 +429,18 @@ def bokeh_plot(G: nx.MultiDiGraph):
     #graph_renderer.inspection_policy = NodesAndLinkedEdges()
     
     
+    print(type(list(Graph_Layout.keys())[0]))
+    if targetNode is not None:
+        #res = gh.minimal_startnodes_for_node(G, targetNode)
+        x,y=Graph_Layout[targetNode]
+        plot.circle(
+                x,
+                y,
+                size=15, 
+                fill_color='red'
+        )
     plot.renderers.append(graph_renderer)
-    plot.add_layout(labels)
+    #plot.add_layout(labels)
     return plot
 
 
