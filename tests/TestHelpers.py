@@ -56,6 +56,47 @@ class TestHelpers(TestCase):
             ]
         )
 
+    def test_list_mult2(self):
+        l1 = ["A", "B"]
+        l2 = ["c", "d"]
+        self.assertEqual(
+            h.list_mult2([l1, l2]),
+            [
+                ("A", "c"),
+                ("B", "c"),
+                ("A", "d"),
+                ("B", "d")
+            ]
+        )
+        l1 = ["A", "B"]
+        l2 = ["c", "d"]
+        l3 = [1, 2]
+        self.assertEqual(
+            h.list_mult2([l1, l2, l3]),
+            [
+                ("A", "c", 1),
+                ("B", "c", 1),
+                ("A", "d", 1),
+                ("B", "d", 1),
+                ("A", "c", 2),
+                ("B", "c", 2),
+                ("A", "d", 2),
+                ("B", "d", 2)
+            ]
+        )
+        # now test with an iterable as list element
+        l1 = [frozenset(["A"]), frozenset(["B"])]
+        l2 = [frozenset(["c"]), frozenset(["d"])]
+        self.assertEqual(
+            h.list_mult2([l1, l2]),
+            [
+                (frozenset(["A"]), frozenset(["c"])),
+                (frozenset(["B"]), frozenset(["c"])),
+                (frozenset(["A"]), frozenset(["d"])),
+                (frozenset(["B"]), frozenset(["d"]))
+            ]
+        )
+
     def test_tuple_list_mult(self):
         l1 = [("A", ), ("B", )]
         l2 = [("c", ), ("d", )]
@@ -82,6 +123,18 @@ class TestHelpers(TestCase):
                 ("B", "c", 2),
                 ("A", "d", 2),
                 ("B", "d", 2)
+            ]
+        )
+        # now test with an iterable as list element
+        l1 = [(frozenset(["A"]), ), (frozenset(["B"]), )]
+        l2 = [(frozenset(["c"]), ), (frozenset(["d"]), )]
+        self.assertEqual(
+            h.tuple_list_mult([l1, l2]),
+            [
+                (frozenset(["A"]), frozenset(["c"])),
+                (frozenset(["B"]), frozenset(["c"])),
+                (frozenset(["A"]), frozenset(["d"])),
+                (frozenset(["B"]), frozenset(["d"]))
             ]
         )
 

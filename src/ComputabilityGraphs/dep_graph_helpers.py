@@ -1,11 +1,134 @@
 #from .ComputerSet import ComputerSet
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, Set
 from functools import lru_cache, reduce, _lru_cache_wrapper
 from inspect import signature
 from copy import copy
 import ComputabilityGraphs.helpers as h
 import networkx as nx
+import matplotlib.pyplot as plt
 from networkx.classes.function import edges
+from networkx.algorithms import bipartite
+from ipywidgets import Layout, Button, Box, VBox, Label, HTMLMath, Output
+
+from . import helpers as h
+class BiGraph(nx.DiGraph):
+    def computer_names(self):
+        def translate(c):
+            return c.__wrapped__.__name__ if isinstance(c,_lru_cache_wrapper) else str(c)
+
+        computers, _ = bipartite.sets(self)
+        return [translate(c) for c in computers]
+
+    def types(self):
+        _ , types = bipartite.sets(self)
+        return types
+
+    def type_names(self):
+        return [t.__name__ for t in self.types()]
+
+    def target_type(self):
+        return [n for n in self.nodes if self.out_degree(n)==0][0]
+
+
+
+    def draw_matplotlib(
+            self, 
+            ax, 
+            pos=None,
+            given=frozenset(),
+            computer_aliases=None,
+            type_aliases=None
+        ):
+
+        target_node=self.target_type()
+        computers, types = bipartite.sets(self)
+        pos=nx.bipartite_layout(self, types) #if pos is None else pos
+        font_size=20
+        # plot given types
+        if type_aliases is None or computer_aliases is None:
+            ax.plot(-1,0)
+            ax.plot(2,0)
+            font_size=0.7*font_size
+            #pos={k:0.1*v for k,v in pos.items()}
+        
+        given_and_present = given.intersection(self.types())
+        nx.draw_networkx_nodes(
+            G=self,
+            pos=pos,
+	    ax=ax,
+	    nodelist=given_and_present,
+	    node_color="green",
+            alpha=0.3,
+            label="given"
+        )
+        # plot missing types
+        nx.draw_networkx_nodes(
+            G=self,
+            pos=pos,
+	    ax=ax,
+	    nodelist=types.difference(given),
+	    node_color="red",
+            alpha=0.3,
+            label="missing"
+        )
+
+        if type_aliases is None:
+            type_labels={t:t.__name__ for t in types}
+        else:
+            type_labels={t:type_aliases[t.__name__] for t in types}
+
+        nx.draw_networkx_labels(
+            G=self,
+	    pos=pos,
+	    ax=ax,
+	    labels=type_labels,
+            font_size=font_size
+        )
+
+        #plot computers
+        nx.draw_networkx_nodes(
+            G=self,
+	    pos=pos,
+	    ax=ax,
+	    nodelist=computers,
+	    node_color="lightblue"
+        )
+        def translate(c):
+            return c.__wrapped__.__name__ if isinstance(c,_lru_cache_wrapper) else str(c)
+
+        if computer_aliases is None:
+            labels={c:translate(c) for c in computers}
+        else:
+
+            labels={c:computer_aliases[translate(c)] for c in computers}
+
+        nx.draw_networkx_labels(
+            G=self,
+	    pos=pos,
+	    ax=ax,
+	    labels=labels,
+            font_color='black',
+            font_size=font_size
+        )
+        # draw edges
+        nx.draw_networkx_edges(
+            G=self,
+            pos=pos,
+            ax=ax
+        )
+
+        # draw target node
+        if target_node is not None:
+            nx.draw_networkx_nodes(
+                G=self,
+                pos=pos,
+	        ax=ax,
+	        nodelist=[target_node],
+	        node_color="red",
+                label="target"
+            )
+        ax.legend()
+    
 
 class DepGraph(nx.DiGraph):
     def __eq__(self, other):
@@ -14,7 +137,7 @@ class DepGraph(nx.DiGraph):
             self.edges == other.edges
         )
 
-
+    
     def draw_matplotlib(self,ax):
         gg=nx.DiGraph()
         gg.add_edges_from(
@@ -32,14 +155,37 @@ class DepGraph(nx.DiGraph):
         nx.draw_networkx(gg,ax=ax,pos=nx.kamada_kawai_layout(gg))
 
 
-    def required_mvars(self):
+
+    def required_mvars(
+            self,
+            given: Set[type]
+        ):
         leaf_comps = [n for n in self.nodes if self.out_degree(n) == 0]
-        return reduce(
+        args = reduce(
                 lambda acc,comp: acc.union(h.input_mvars(comp)),
                 leaf_comps,
                 frozenset({})
         )
+        return args if given is None else args.difference(given)
     
+    def to_bipartite(self):
+        cs=copy(self.nodes)
+        B = BiGraph()
+        # Add nodes with the node attribute "bipartite"
+        B.add_nodes_from(
+            [h.output_mvar(c) for c in cs],
+            bipartite=0
+        )
+
+        B.add_nodes_from(
+            cs,
+            bipartite=1
+        )
+        # Add edges only between nodes of opposite node sets
+        B.add_edges_from([ (c,h.output_mvar(c)) for c in cs])
+        B.add_edges_from([ (a,c) for c in cs for a in h.input_mvars(c) ])
+        return B
+
 
     def __hash__(self):
         return hash(
@@ -49,6 +195,117 @@ class DepGraph(nx.DiGraph):
             )
         )
 
+    def jupyter_widget(
+            self,
+            computer_aliases=None,
+            type_aliases=None,
+            given=frozenset()
+        ):
+        cw1='20%'
+        cw2='5%'
+        cw3='50%'
+        cw4=cw2
+        cw5=cw1
+        
+        B=self.to_bipartite()
+
+        with plt.ioff():
+            fig = plt.figure(figsize=(6,5))
+            #rect = 0, 0, 0.8, 1.2  # l, b, w, h
+            rect = 0, 0, 1, 1  # l, b, w, h
+            ax = fig.add_axes(rect)
+        
+        graph_out=Output(
+            layout=Layout(
+                height='auto',
+                #width="{}%".format(thumbnail_width),
+                width=cw3,
+                #min_width=cw3,
+                description="Bipartite Dependency Tree",
+            )
+        )
+        with graph_out:
+            ax.clear()
+            #ax = fig.add_subplot(1, 1, 1)
+            B.draw_matplotlib(
+                ax,
+                computer_aliases=computer_aliases,
+                type_aliases=type_aliases,
+                given=given
+            )
+            display(ax.figure)
+            plt.close(fig)
+        
+        
+        type_names_box=VBox(
+            children=[
+                Button(
+                    layout= Layout(height='auto', min_width=cw1),
+                    description=tn,
+                    button_style='warning'
+                )
+                for tn in B.type_names()
+            ]
+        )
+        computer_names_box=VBox(
+            children=[
+                Button(
+                    layout= Layout(height='auto', min_width=cw5),
+                    description=cn,
+                    button_style='warning'
+                )
+                for cn in B.computer_names()
+            ]
+        )
+        
+        def type_aliases_box(type_aliases):
+            return  [] if type_aliases is None else [VBox(
+                children=[
+                    Button(
+                        layout= Layout(height='auto', min_width=cw2),
+                        description=type_aliases[tn],
+                        button_style='warning'
+                    )
+                    for tn in B.type_names()
+                ]
+            )]
+
+        def computer_aliases_box(computer_aliases):
+            return  [] if computer_aliases is None else [VBox(
+                children=[
+                    Button(
+                        layout= Layout(height='auto', min_width=cw4),
+                        description=computer_aliases[cn],
+                        button_style='warning'
+                    )
+                    for cn in B.computer_names()
+                ]
+            )]
+
+        line = Box(
+            children=(
+                [type_names_box] 
+                + type_aliases_box(type_aliases) 
+                + [graph_out]
+                + computer_aliases_box(computer_aliases)
+                + [computer_names_box]
+            ),
+            layout= Layout(
+                overflow='scroll hidden',
+                #border='3px solid black',
+                #width='1000px',
+                width='100%',
+                height='',
+                flex_flow='row',
+                display='flex'
+            )
+        )
+        return VBox(
+            [
+                #Label('Scroll horizontally:'),
+                line
+            ]
+        )
 
 def dep_graph(
         root_type: type,
@@ -131,16 +388,16 @@ def all_dep_graphs(root_type,cs,given):
 
 def computable_dep_graphs(root_type,cs,given):
     res = filter(
-        lambda g: g.required_mvars().issubset(given),
+        lambda g: g.required_mvars(given).issubset(given),
         all_dep_graphs(root_type,cs,given)
     )
     #from IPython import embed; embed()
     return res
 
 
-def shortest_computable_dep_graph(root_type,cs,given):
-    cgs=tuple(computable_dep_graphs(root_type,cs,given))
-    if len(cgs)>0: 
+def shortest_computable_dep_graph(root_type, cs, given):
+    cgs = tuple(computable_dep_graphs(root_type, cs, given))
+    if len(cgs) > 0:
         return sorted(
             computable_dep_graphs(
                 root_type,
@@ -148,7 +405,7 @@ def shortest_computable_dep_graph(root_type,cs,given):
                 given
             ),
             key=lambda g: len(g.edges)
-        )[0] 
+        )[0]
     else:
         raise Exception("This variable can not computed from the given values")
 

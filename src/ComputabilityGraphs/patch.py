@@ -6,8 +6,6 @@ import inspect
 from inspect import signature
 from string import ascii_lowercase, ascii_uppercase
 from typing import FrozenSet, Set, Callable, Tuple, List, Any
-
-from networkx.algorithms.operators.binary import union
 from .TypeSynonyms import  Computer
 from .ComputerSet import ComputerSet
 from .Node import Node
@@ -30,19 +28,15 @@ def all_computer_combis_for_mvar_set(
     comp_tuple_list = list_mult(comp_lists)
     return frozenset([frozenset(t) for t in comp_tuple_list])
 
-# fixme mm 8-12-2022
+
 def list_mult(
-    ll: List[List]
+    ll: Tuple[List]
     ) ->  List[Tuple]:
     def totup(x):
         t= tuple(x) if isinstance(x,Iterable) else (x,)
         return t
     return tuple_list_mult([ [totup(el) for el in l] for l in ll])
 
-def list_mult2(
-    ll: List[List]
-    ) ->  List[Tuple]:
-    return tuple_list_mult([ [(el,) for el in l] for l in ll])
 
 def tuple_list_mult(
     ll: Tuple[List[Tuple]]
@@ -182,24 +176,12 @@ def all_mvars(all_computers: FrozenSet[Callable]) -> FrozenSet[type]:
 
     # the set of all mvars is implicitly defined by the
     # parameterlists and return values of the computers
-    return all_output_types(all_computers).union(
-            all_input_types(all_computers)
-    )
-
-
-def all_output_types(all_computers: FrozenSet[Callable]) -> FrozenSet[type]:
     return reduce(
-        lambda acc, c: acc.union({output_mvar(c)}),
+        lambda acc, c: acc.union(input_mvars(c), {output_mvar(c)}),
         all_computers,
-        frozenset({})
+        frozenset({}),
     )
 
-def all_input_types(all_computers: FrozenSet[Callable]) -> FrozenSet[type]:
-    return reduce(
-        lambda acc, c: acc.union(input_mvars(c)),
-        all_computers,
-        frozenset({})
-    )
 
 
 # synonym for arg_set
@@ -208,14 +190,13 @@ def input_mvars(computer: Callable) -> FrozenSet[type]:
     return frozenset({param.annotation for param in params})
 
 
-# fixme: mm 8-11 rename to result_type
 def output_mvar(computer: Callable) -> type:
     return signature(computer).return_annotation
 
 
-def remove_supersets(ss: FrozenSet[FrozenSet]) -> FrozenSet[FrozenSet]:
+def remove_supersets(ss: FrozenSet[FrozenSet])->FrozenSet[FrozenSet]:
     sl = sorted(list(ss), key=len)  # smallest sets first
-    checked, to_do = remove_supersets_from_sorted_list([],sl)
+    checked,to_do = remove_supersets_from_sorted_list([],sl)
     return frozenset(checked)
 
 def remove_supersets_from_sorted_list(

@@ -1,17 +1,7 @@
-from typing import Callable
 import unittest
-import inspect
-import networkx as nx
-import matplotlib.pyplot as plt
-from copy import copy
-from typing import Dict
-
 from ComputabilityGraphs.CMTVS import CMTVS
-from ComputabilityGraphs.ComputerSet import ComputerSet
 from ComputabilityGraphs.Node import Node
 
-from ComputabilityGraphs import helpers as h
-from ComputabilityGraphs import dep_graph_helpers as dgh
 
 from testComputers import (
     A, B, C, D, E, F, G, H,
@@ -50,13 +40,12 @@ class TestCMTVS(unittest.TestCase):
     
     def test_provided_mvar_values(self):
         self.assertSetEqual(
-            self.cmtvs.provided_mvar_values ,
+        self.cmtvs.provided_mvar_values,
             self.provided_values
         )
         
-
     def test_provided_mvar_types(self):
-        ref =frozenset(
+        ref = frozenset(
                 [
                     type(v) 
                     for v in self.provided_values
@@ -64,10 +53,9 @@ class TestCMTVS(unittest.TestCase):
         ) 
         print(ref)
         self.assertSetEqual(
-            self.cmtvs.provided_mvar_types ,
+            self.cmtvs.provided_mvar_types,
             ref
         )
-        
 
     def test_computable_mvar_types(self):
         res = self.cmtvs.computable_mvar_types()
@@ -79,7 +67,6 @@ class TestCMTVS(unittest.TestCase):
             )
         )
 
-    
     def test_paths_to_single_mvar(self):
         cmtvs = self.cmtvs
         pd = cmtvs.path_dict_to_single_mvar(B)
@@ -89,13 +76,13 @@ class TestCMTVS(unittest.TestCase):
         paths = pd[startNode]
         
         res = paths[0]
-        ref = [startNode, Node({C,D}), Node({B})]
+        ref = [startNode, Node({C, D}), Node({B})]
         self.assertEqual(res, ref)
-    
+
     def test_get_single_value(self):
         cmtvs = self.cmtvs
         res = cmtvs._get_single_value(E)
-        self.assertEqual(res,E(1))
+        self.assertEqual(res, E(1))
         
         ## now get a variable that is not provided directly but computable in one step
         #res = cmtvs._get_single_value(C)

@@ -139,7 +139,7 @@ class TestDepGraphs(InDirTest):
         g.add_edge(b_from_c_d,d_from_g_h)
 
         ref = frozenset([E,F,G,H])
-        self.assertEqual(ref,g.required_mvars())
+        self.assertEqual(ref,g.required_mvars(given=frozenset()))
 
 
     def test_all_computer_combies(self):
@@ -190,7 +190,7 @@ class TestDepGraphs(InDirTest):
         for i,ax in enumerate(axs):
             g = gs[i]
             print(g)
-            print(g.required_mvars())
+            print(g.required_mvars(given=given))
             g.draw_matplotlib(ax)
         fig.savefig("graphs.pdf")
 
@@ -215,7 +215,7 @@ class TestDepGraphs(InDirTest):
         ax  = fig.subplots(1)
         g = gs[0]
         print(g)
-        print(g.required_mvars())
+        print(g.required_mvars(given=given))
         g.draw_matplotlib(ax)
         fig.savefig("graphs.pdf")
         

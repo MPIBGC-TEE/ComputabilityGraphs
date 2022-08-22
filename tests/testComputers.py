@@ -25,12 +25,14 @@ class A(SC):
 class B(SC):
     pass
 
+
 class C(SC):
     pass
 
 
 class D(SC):
     pass
+
 
 class E(SC):
     pass
@@ -53,6 +55,45 @@ class I(SC):
 
 
 class J(SC):
+    pass
+
+
+class K(SC):
+    pass
+
+
+class L(SC):
+    pass
+
+
+class M(SC):
+    pass
+
+
+class N(SC):
+    pass
+
+
+class O(SC):
+    pass
+
+
+class P(SC):
+    pass
+
+
+class Q(SC):
+    pass
+
+
+class R(SC):
+    pass
+
+
+class S(SC):
+    pass
+
+class T(SC):
     pass
 
 class A2:
@@ -224,6 +265,88 @@ def b_from_a(a: A) -> B:
 
 def f_from_e(e: E) -> F:
     return F()
+
+
+def g_from_i_j_k(
+        i: I,
+        j: J,
+        k: K
+) -> G:
+    return G()
+
+
+def g_from_p_q(
+        p: P,
+        q: Q
+) -> G:
+    return G()
+
+
+def h_from_i_l(
+        i: I,
+        l: L
+) -> H:
+    return H()
+
+
+def j_from_i_p_q(
+        i: I,
+        p: P,
+        q: Q
+) -> J:
+    return J()
+
+
+def k_from_g_i(
+        g: G,
+        i: I
+) -> K:
+    return K()
+
+# fake (no equivalent in  bgc_md2)
+def k_from_r_s(
+        r: R,
+        s: S 
+) -> K:
+    return K()
+
+
+def p_from_r_s(
+        r: R,
+        s: S 
+) -> P:
+    return P()
+
+
+def l_from_h_i(
+        h: H,
+        i: I
+) -> L:
+    return L()
+
+
+def o_from_i_k(
+        i: I,
+        k: K,
+) -> O:
+    return O()
+
+
+def p_from_i_j_k(
+        i: I,
+        j: J,
+        k: K
+) -> P:
+    return P()
+
+
+def q_from_i_j_k(
+        i: I,
+        j: J,
+        k: K
+) -> Q:
+    return Q()
+
 
 computers = frozenset(
     {

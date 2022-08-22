@@ -1,7 +1,7 @@
 import networkx as nx
 import inspect
+from typing import Dict, List, Set, Callable
 
-from typing import Dict, List, Set, TypeVar, Callable
 from functools import lru_cache
 from frozendict import frozendict
 from copy import deepcopy
@@ -20,7 +20,7 @@ from . import dep_graph_helpers as dgh
 
 # choose which implementation to use
 # at the moment rgh is much faster
-#graph_maker = fgh.fast_graph
+# graph_maker = fgh.fast_graph
 graph_maker = rgh.fast_graph
 
 class CMTVS():
@@ -122,7 +122,7 @@ class CMTVS():
                     return lambda: self._get_single_value(var)
         return super().__getattribute__(name)
 
-    #@lru_cache
+    # @lru_cache
     def path_dict_to_single_mvar(
             self,
             t: type
@@ -220,13 +220,13 @@ class CMTVS():
             self,
             t: type,
         ):  # ->t:
-    
+
         pvs = self.provided_mvar_values
         pv_dict = {type(v): v for v in pvs}
         #print(pv_dict)
         if t in [type(v) for v in pvs]:
             return pv_dict[t]
-    
+
         # create results step by step along the graph
         g = dgh.shortest_computable_dep_graph(
             root_type=t,
@@ -234,7 +234,7 @@ class CMTVS():
             given=self.provided_mvar_types
         )
 
-        rg=copy(g).reverse()
+        rg = copy(g).reverse()
         # compute the order of computations
         computations=nx.topological_sort(rg)
 
