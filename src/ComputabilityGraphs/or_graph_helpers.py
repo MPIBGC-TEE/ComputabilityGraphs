@@ -23,64 +23,90 @@ def add_tab(s: str):
         ]
     ) 
 
-class OrGraph(nx.DiGraph):
+class OrGraphNX(nx.DiGraph):
     # class to represent the data structure as a bipartite networkx.DiGraph
     # which is used to draw it, (but not planned for inference)
+    def root_node(self):
+        return [n for n in  self.nodes if self.in_degree(n)==0][0]
+
     def draw_matplotlib(
             self,
             ax,
             computer_aliases=None,
             type_aliases=None
     ):
-        pos = nx.circular_layout(self)
-        # pos = nx.kamada_kawai_layout(self)
+
+        # for pygraphiz to work we have to translate the nodes
+        # to strings  or better integers
+        # ohter datatypes are not supported and of the two integers
+        # are safer since not all strings go through without errors
+        H = nx.convert_node_labels_to_integers(self, label_attribute='node_label')
+        H_layout = nx.nx_pydot.pydot_layout(H, prog='dot')
+        pos = {H.nodes[n]['node_label']: p for n, p in H_layout.items()}
+
         nd = self.nodes.data()
+        
+        #pos = nx.circular_layout(dg)
+        # pos = nx.kamada_kawai_layout(dg)
         type_nodes = [n for n in self.nodes if nd[n]["bipartite"] == "type"]
         nx.draw_networkx_nodes(
-            self, pos=pos, ax=ax, nodelist=type_nodes, node_color="blue"
+            self,
+	        pos=pos,
+	        ax=ax,
+	        nodelist=type_nodes,
+	        node_color="lightblue",
+			alpha=0.5,
         )
         computer_nodes = [
             n for n in self.nodes
             if nd[n]["bipartite"] == "computer"
         ]
         nx.draw_networkx_nodes(
-            self, pos=pos, ax=ax, nodelist=computer_nodes, node_color="red"
+            self,
+			pos=pos,
+			ax=ax,
+			nodelist=computer_nodes,
+			node_color="red",
+			alpha=0.5,
         )
         nx.draw_networkx_edges(
             self, pos=pos, ax=ax, edgelist=self.edges()
         )
-
-        def translate(c):
+        
+        def type_node_to_str(n):
+            t, avoid_types = n
+            return "{}\n{}".format(
+                t.__name__ ,
+                TypeSet(avoid_types).short_str()
+            )
+            
+        nx.draw_networkx_labels(
+            self,
+            pos=pos, 
+            ax=ax, 
+            labels={
+                tn: type_node_to_str(tn) 
+                for tn in type_nodes
+            }, 
+            font_color='black'
+        )
+        def computer_nodes_to_str(n):
+            c, avoid_types=n
             return c.__wrapped__.__name__ if isinstance(
                 c,
                 _lru_cache_wrapper
             ) else c.__name__
 
-        if computer_aliases is None:
-            computer_labels = {c: translate(c) for c in computer_nodes}
-        else:
-            computer_labels = {
-                c: computer_aliases[translate(c)] for c in computer_nodes
-            }
-
-        if type_aliases is None:
-            type_labels = {t: t.__name__ for t in type_nodes}
-        else:
-            type_labels = {t: type_aliases[t.__name__] for t in type_nodes}
-
         nx.draw_networkx_labels(
-            self, 
+            self,
             pos=pos, 
             ax=ax, 
-            labels=computer_labels, 
+            labels={
+                cn: computer_nodes_to_str(cn)
+                for cn in computer_nodes
+            }, 
+            #font_color='white'
             font_color='black'
-        )
-        nx.draw_networkx_labels(
-            self, 
-            pos=pos, 
-            ax=ax, 
-            labels=type_labels, 
-            font_color='white'
         )
 
 
@@ -142,13 +168,18 @@ class TypeNode(TypeTree):
         rts = [output_mvar(ct.root_computer) for ct in self.comp_trees]
         return rts[0]
 
-    def to_OrGraph(self):
-        g = OrGraph()
+    def to_networkx_graph(
+            self,
+            avoid_types
+        ):
+        g = OrGraphNX()
         root_type = self.root_type
-        g.add_node(root_type, bipartite="type")
+        node=(root_type,avoid_types)
+        g.add_node(node, bipartite="type")
         for ct in self.comp_trees:
-            g = nx.compose(g, ct.to_OrGraph())
-            g.add_edge(root_type, ct.root_computer)
+            sub_graph=ct.to_networkx_graph(avoid_types.union({root_type}))
+            g = nx.compose(g, sub_graph)
+            g.add_edge(node, sub_graph.root_node())
 
         return g
 
@@ -174,20 +205,35 @@ class TypeLeaf(TypeTree):
         #possible start types
         return AltSet([TypeSet([self.root_type])])
 
-    def to_OrGraph(self):
-        g = OrGraph()
+    def to_networkx_graph(
+            self,
+            avoid_types
+        ):
+        g = OrGraphNX()
         root_type = self.root_type
-        g.add_node(root_type, bipartite="type")
+        node=(root_type, avoid_types)
+        g.add_node(node, bipartite="type")
         return g
+
+    #def to_igraph_graph(self):
+    #    g = OrGraphNX()
+    #    root_type = self.root_type
+    #    g.add_node(root_type, bipartite="type")
+    #    return g
 
 
 class TypeSet(frozenset):
     def __str__(self):
         return (
             self.__class__.__name__
-            + "({"
+            + "({})".format(self.short_str()) 
+        )
+
+    def short_str(self):
+        return (
+            "{"
             + ",".join([el.__name__ for el in self])
-            + "})"
+            + "}"
         )
     def __repr__(self):
         return (
@@ -250,7 +296,8 @@ class CompTree:
     ):
         # remembering the root_computer is not strictly necessary 
         # but nice for drawing
-        # We could also link upwards to it
+        # We could also link upwards to it to make the tree traversable
+        # in both directions
         self.root_computer = root_computer  
         self.type_trees = type_trees
     
@@ -294,16 +341,16 @@ class CompTree:
         )
 
 
-    def to_OrGraph(self):
-        g = OrGraph()
+    def to_networkx_graph(self,avoid_types):
+        g = OrGraphNX()
         root_computer = self.root_computer
-        if self.type_trees == []:
-            g.add_node(root_computer, bipartite="computer")
-        else:
-            g.add_node(root_computer, bipartite="computer")
+        node = (root_computer, avoid_types)
+        g.add_node(node, bipartite="computer")
+        if self.type_trees != []:
             for tt in self.type_trees:
-                g = nx.compose(g, tt.to_OrGraph())
-                g.add_edge (root_computer, tt.root_type)
+                sub_graph = tt.to_networkx_graph(avoid_types)
+                g = nx.compose(g, sub_graph )
+                g.add_edge (node, sub_graph.root_node())
         return g
 
 

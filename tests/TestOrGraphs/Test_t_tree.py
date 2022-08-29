@@ -1,7 +1,7 @@
 # import networkx as nx
-# import matplotlib.pyplot as plt
-# from testinfrastructure.InDirTest import InDirTest
-from unittest import TestCase
+import matplotlib.pyplot as plt
+from testinfrastructure.InDirTest import InDirTest
+# from unittest import TestCase
 from ComputabilityGraphs.or_graph_helpers import (
     TypeNode,
     TypeLeaf,
@@ -51,7 +51,7 @@ from testComputers import (
 )
 
 
-class Test_t_tree(TestCase):
+class Test_t_tree(InDirTest):
 
     def test_t_tree_1a(self):
         computers = ComputerSet([
@@ -346,19 +346,14 @@ class Test_t_tree(TestCase):
                             ])
                         ),
                         TypeLeaf(K)
-                        #TypeNode(
-                        #    comp_trees=frozenset([
-                        #        CompTree(
-                        #        	root_computer=k_from_r_s,
-                        #        	type_trees = frozenset([
-                        #        		TypeLeaf(R),
-                        #        		TypeLeaf(S),
-                        #        	])
-                        #        )
-                        #    ])
-                        #)
                     ])
                 )
             ])
         )
         self.assertEqual(res, ref)    
+
+        fig = plt.figure(figsize=(20,20))
+        ax = fig.add_subplot(1, 1, 1)
+        og = res.to_networkx_graph(TypeSet({}))
+        og.draw_matplotlib(ax)
+        fig.savefig("OrGraphNX.pdf")
