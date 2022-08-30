@@ -46,8 +46,17 @@ from testComputers import (
     p_from_i_j_k,
     p_from_r_s,
     q_from_i_j_k,
-    k_from_r_s
-
+    k_from_r_s,
+    a_from_i,
+    b_from_c_d,
+    b_from_e_f,
+    c_from_b,
+    d_from_b,
+    d_from_g_h,
+    e_from_b,
+    f_from_b,
+    a_from_b_c, 
+    c_from_e_f,
 )
 
 
@@ -333,11 +342,11 @@ class Test_t_tree(InDirTest):
                     root_computer=g_from_i_j_k,
                     type_trees=frozenset([
                         TypeLeaf(I),
-                        TypeNode(
+                        TypeNode(   
                             comp_trees=frozenset([
                                 CompTree(
-                        	        root_computer=j_from_i_p_q,
-                                	type_trees = frozenset([
+                        	         root_computer=j_from_i_p_q,
+                                     type_trees = frozenset([
                                 		TypeLeaf(I),
                                 		TypeLeaf(P),
                                 		TypeLeaf(Q),
@@ -352,8 +361,43 @@ class Test_t_tree(InDirTest):
         )
         self.assertEqual(res, ref)    
 
+        og = res.to_networkx_graph(TypeSet({}))
         fig = plt.figure(figsize=(20,20))
         ax = fig.add_subplot(1, 1, 1)
-        og = res.to_networkx_graph(TypeSet({}))
         og.draw_matplotlib(ax)
         fig.savefig("OrGraphNX.pdf")
+
+    def test_t_tree_with_given_variables(self):
+        res = t_tree(
+            root_type=C,
+            available_computers={
+                a_from_i,
+                a_from_b_c, 
+                b_from_c_d,
+                c_from_e_f,
+                d_from_g_h
+            },
+            given_types={E, F, G, H}
+        )
+        ref = TypeNode(
+            comp_trees=frozenset([
+                CompTree(
+                    root_computer=c_from_e_f,
+                    type_trees=frozenset([
+                        TypeLeaf(E),
+                        TypeLeaf(F),
+                    ])
+                )
+            ])
+        )
+        self.assertTrue(ref == res)
+        og_res = res.to_networkx_graph(TypeSet({}))
+        og_ref = ref.to_networkx_graph(TypeSet({}))
+        fig = plt.figure(figsize=(20,20))
+        axs = fig.subplots(2, 1)
+        og_res.draw_matplotlib(axs[0])
+        og_ref.draw_matplotlib(axs[1])
+        fig.savefig("OrGraphNX.pdf")
+        
+
+        

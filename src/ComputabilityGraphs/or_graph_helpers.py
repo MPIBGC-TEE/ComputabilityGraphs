@@ -133,7 +133,11 @@ class TypeNode(TypeTree):
         )
     
     def __eq__(self, other):
-        return self.comp_trees == other.comp_trees
+        return (
+            self.comp_trees == other.comp_trees 
+            if isinstance(other, self.__class__) 
+            else False
+        )    
     
     def __repr__(self):
         return (
@@ -198,7 +202,7 @@ class TypeLeaf(TypeTree):
             + ")"
         )
     def __eq__(self, other):
-        return self.root_type == other.root_type
+        return self.root_type == other.root_type if self.__class__ == other.__class__  else False
     
     @property
     def psts(self):
@@ -303,10 +307,14 @@ class CompTree:
     
     def __eq__(self, other):
         return (
-            (self.type_trees == other.type_trees) 
-            and 
-            (self.root_computer == other.root_computer)
-        )
+            (
+                (self.type_trees == other.type_trees) 
+                and 
+                (self.root_computer == other.root_computer)
+            )
+            if isinstance(other, self.__class__) 
+            else False
+        )    
 
     def __hash__(self):
         return sum([
@@ -360,11 +368,17 @@ def t_tree(
     root_type: type,
     available_computers: ComputerSet = ComputerSet({}),
     avoid_types: Set[type] = frozenset(),
+    given_types: Set[type] = frozenset(),
 ) -> TypeTree:
+    #def fi(c):
+    #    return output_mvar(c)  == root_type and len( #        input_mvars(c).intersection(avoid_types)
+    #    )==0
     def fi(c):
-        return output_mvar(c)  == root_type and len(
-            input_mvars(c).intersection(avoid_types)
-        )==0
+        return (
+            output_mvar(c)  == root_type 
+            and len(input_mvars(c).intersection(avoid_types))==0
+            and output_mvar(c) not in given_types 
+        )
     
     available_result_computers = tuple(
         filter(fi, available_computers)

@@ -198,12 +198,13 @@ class TestOrGraphs(InDirTest):
         # from IPython import embed; embed()
     
     def test_draw_igraph(self):
+        # incomplete, but the layout works very well 
+        # 
         res = t_tree(
             root_type=G,
             available_computers=ComputerSet([g_from_i_j_k, g_from_p_q]),
             avoid_types=frozenset({}),
         )
-        import igraph as ig
         og = res.to_networkx_graph(
             avoid_types=TypeSet({})
         )
