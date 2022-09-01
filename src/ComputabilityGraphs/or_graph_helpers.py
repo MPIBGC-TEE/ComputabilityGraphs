@@ -7,6 +7,12 @@ import networkx as nx
 # from networkx.algorithms.operators.binary import difference
 # from functools import lru_cache, reduce, _lru_cache_wrapper
 from functools import reduce, _lru_cache_wrapper
+from .OrGraphs.MayBeDepGraph import (
+    NoDepGraph, 
+    JustDepGraph,
+    MayBeDepGraph
+)
+from .dep_graph_helpers import DepGraph
 
 from ComputabilityGraphs.ComputerSet import ComputerSet
 from ComputabilityGraphs.helpers import (
@@ -114,6 +120,7 @@ class TypeTree:
     # superclass
     pass
 
+
 class TypeNode(TypeTree):
     def __init__(
             self, 
@@ -172,6 +179,14 @@ class TypeNode(TypeTree):
         rts = [output_mvar(ct.root_computer) for ct in self.comp_trees]
         return rts[0]
 
+    def depgraph(self) -> MayBeDepGraph:
+        return next(
+            (   
+                ct.depgraph() 
+                for ct in self.comp_trees
+            )    
+        ) 
+
     def to_networkx_graph(
             self,
             avoid_types
@@ -209,6 +224,9 @@ class TypeLeaf(TypeTree):
         #possible start types
         return AltSet([TypeSet([self.root_type])])
 
+    def depgraph(self) -> NoDepGraph:
+        return NoDepGraph()
+        
     def to_networkx_graph(
             self,
             avoid_types
@@ -348,6 +366,20 @@ class CompTree:
             + "\n)"
         )
 
+    def depgraph(self) -> MayBeDepGraph:
+        dg = DepGraph()
+        rc=self.root_computer
+        dg.add_node(rc)
+        for tt in self.type_trees:
+            mb_dg=tt.depgraph()
+            if isinstance(mb_dg, JustDepGraph):
+                sub_graph = mb_dg.dg
+                dg.update(sub_graph)
+                dg.add_edge(rc,sub_graph.root_node())
+        #from IPython import embed;embed()  
+        return JustDepGraph(dg)
+
+
 
     def to_networkx_graph(self,avoid_types):
         g = OrGraphNX()
@@ -370,9 +402,6 @@ def t_tree(
     avoid_types: Set[type] = frozenset(),
     given_types: Set[type] = frozenset(),
 ) -> TypeTree:
-    #def fi(c):
-    #    return output_mvar(c)  == root_type and len( #        input_mvars(c).intersection(avoid_types)
-    #    )==0
     def fi(c):
         return (
             output_mvar(c)  == root_type 
@@ -393,6 +422,7 @@ def t_tree(
                     c=c,
                     available_computers=available_computers.difference({c}),
                     avoid_types=avoid_types.union({root_type}),
+                    given_types=given_types
                 )
                 for c in available_result_computers
             ]),
@@ -400,7 +430,10 @@ def t_tree(
 
 
 def c_tree(
-    c: Callable, available_computers: ComputerSet, avoid_types: List[type]  # computer
+    c: Callable, 
+    available_computers: ComputerSet,
+    avoid_types: List[type],  
+    given_types: Set[type] = frozenset(),
 ) -> CompTree:
     res_type = output_mvar(c)
     argset = input_mvars(c)
@@ -411,6 +444,7 @@ def c_tree(
                 root_type=v,
                 available_computers=available_computers,
                 avoid_types=avoid_types,
+                given_types=given_types
             )
             for v in argset
         ]),

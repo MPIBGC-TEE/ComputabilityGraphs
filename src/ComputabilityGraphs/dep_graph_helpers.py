@@ -131,6 +131,9 @@ class BiGraph(nx.DiGraph):
     
 
 class DepGraph(nx.DiGraph):
+    def root_node(self):
+        return [n for n in  self.nodes if self.in_degree(n)==0][0]
+
     def __eq__(self, other):
         return (
             self.nodes == other.nodes and
