@@ -140,6 +140,15 @@ class DepGraph(nx.DiGraph):
             self.edges == other.edges
         )
 
+    def __repr__(self):
+        return (
+            self.__class__.__name__ + "(\n"
+            + reduce(
+                lambda acc,el: acc + el,
+                ["\n"+h.add_tab(h.add_tab("->" + el.__name__)) for el in self.nodes]
+            )    
+            + "\n)"
+        )
     
     def draw_matplotlib(self,ax):
         gg=nx.DiGraph()
@@ -309,6 +318,30 @@ class DepGraph(nx.DiGraph):
                 line
             ]
         )
+
+    def compute_value(
+        self,
+        t: type,
+        pvs: Set
+    ):
+        rg = copy(self).reverse()
+        # compute the order of computations
+        computations = nx.topological_sort(rg)
+        
+        # initialize the set of values to start from
+        
+        def apply(acc: Dict, comp: Callable) -> Dict:
+            arg_classes = [
+                p.annotation for p in signature(comp).parameters.values()
+            ]
+            arg_values = [acc[cl] for cl in arg_classes]
+            res = copy(acc)
+            res.update({h.output_mvar(comp): comp(*arg_values)})
+            return res
+        
+        pv_dict = reduce(apply, computations, {type(v): v for v in pvs})
+        
+        return pv_dict[t]
 
 def dep_graph(
         root_type: type,

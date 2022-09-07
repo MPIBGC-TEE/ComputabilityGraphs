@@ -272,3 +272,12 @@ def equivalent_singlegraphs(g1_single: nx.DiGraph, g2_single: nx.DiGraph) -> boo
             for e in g2_single.edges()
         ]
     ) & (g1_single.nodes() == g2_single.nodes())
+
+
+def add_tab(s: str):
+    return "\n".join(
+        [
+            "\t" + line
+            for line in s.split("\n")
+        ]
+    ) 

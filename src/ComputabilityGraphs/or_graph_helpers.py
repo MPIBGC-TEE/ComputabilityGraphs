@@ -7,10 +7,10 @@ import networkx as nx
 # from networkx.algorithms.operators.binary import difference
 # from functools import lru_cache, reduce, _lru_cache_wrapper
 from functools import reduce, _lru_cache_wrapper
-from .OrGraphs.MayBeDepGraph import (
-    NoDepGraph, 
-    JustDepGraph,
-    MayBeDepGraph
+from .OrGraphs.MayBeDepGraphs import (
+    NoDepGraphs, 
+    JustDepGraphs,
+    MayBeDepGraphs
 )
 from .dep_graph_helpers import DepGraph
 
@@ -18,9 +18,74 @@ from ComputabilityGraphs.ComputerSet import ComputerSet
 from ComputabilityGraphs.helpers import (
     input_mvars,
     output_mvar,
-    list_mult2
+    list_mult2,
+    add_tab
 )
 
+class TypeSet(frozenset):
+    def __str__(self):
+        return (
+            self.__class__.__name__
+            + "({})".format(self.short_str()) 
+        )
+
+    def short_str(self):
+        return (
+            "{"
+            + ",".join([el.__name__ for el in self])
+            + "}"
+        )
+    def __repr__(self):
+        return (
+            self.__class__.__name__
+            + "({"
+            + ",".join([el.__name__ for el in self])
+            + "})"
+        )
+
+
+class AltSet(frozenset):
+    #def __str__(self):
+    #    return (
+    #        self.__class__.__name__
+    #        + "({"
+    #        + ",\n".join([str(el) for el in self])
+    #        + "})"
+    #    )
+    def __repr__(self):
+        return (
+            self.__class__.__name__
+            + "({\n\t"
+            + ",\n\t".join([repr(el) for el in self])
+            + "\n})"
+        )
+
+
+class AltSetSet(frozenset):
+
+    #def __str__(self):
+    #    return (
+    #        self.__class__.__name__
+    #        + "({"
+    #        + ",\n".join([str(el) for el in self])
+    #        + "})"
+    #     )
+
+    def __repr__(self):
+        return (
+            self.__class__.__name__
+            + "({"
+            + ",\n".join([repr(el) for el in self])
+            + "})"
+        )
+
+    def combine(self) -> AltSet[TypeSet]:
+        # for a computer with more than one argument the
+        # altsets of the arguments have to be combined
+        # The result is the set of the union of all combinations 
+        # of the altsets of  the arguments.
+        set_tupels = list_mult2([el for el in self])
+        return AltSet([TypeSet(frozenset.union(*t)) for t in set_tupels])
 def add_tab(s: str):
     return "\n".join(
         [
@@ -28,6 +93,8 @@ def add_tab(s: str):
             for line in s.split("\n")
         ]
     ) 
+
+
 
 class OrGraphNX(nx.DiGraph):
     # class to represent the data structure as a bipartite networkx.DiGraph
@@ -179,13 +246,30 @@ class TypeNode(TypeTree):
         rts = [output_mvar(ct.root_computer) for ct in self.comp_trees]
         return rts[0]
 
-    def depgraph(self) -> MayBeDepGraph:
-        return next(
-            (   
-                ct.depgraph() 
-                for ct in self.comp_trees
-            )    
-        ) 
+    def computable_depgraphs(
+        self,
+        given: TypeSet = TypeSet({})
+    ) -> MayBeDepGraphs:
+        # althoug the functions t_tree and c_tree take given nodes into account
+        # they don't exclude paths that need more than the given types to be
+        # computable, since one of the purpuses of TypeTrees is to provide
+        # information about MISSING information. The given argument here means
+        # that we are only looking for depgraphs that can actually be used to
+        # compute the value of the variable at the top of the TypeTree. 
+        
+        dep_graph_sets = [ 
+            ct.computable_depgraphs(given)
+            for ct in self.comp_trees 
+        ]
+        #from IPython import embed;embed()
+        
+        return JustDepGraphs(
+            reduce(
+                lambda acc,el:acc.union(el.result_set), 
+                dep_graph_sets,
+                frozenset()
+            )
+        )
 
     def to_networkx_graph(
             self,
@@ -224,8 +308,14 @@ class TypeLeaf(TypeTree):
         #possible start types
         return AltSet([TypeSet([self.root_type])])
 
-    def depgraph(self) -> NoDepGraph:
-        return NoDepGraph()
+    def computable_depgraphs(
+        self,
+        given: TypeSet = TypeSet({})
+    ) -> MayBeDepGraphs:
+        if self.root_type in given:
+            return JustDepGraphs(frozenset({DepGraph()})) 
+        else:
+            return NoDepGraphs() 
         
     def to_networkx_graph(
             self,
@@ -244,70 +334,6 @@ class TypeLeaf(TypeTree):
     #    return g
 
 
-class TypeSet(frozenset):
-    def __str__(self):
-        return (
-            self.__class__.__name__
-            + "({})".format(self.short_str()) 
-        )
-
-    def short_str(self):
-        return (
-            "{"
-            + ",".join([el.__name__ for el in self])
-            + "}"
-        )
-    def __repr__(self):
-        return (
-            self.__class__.__name__
-            + "({"
-            + ",".join([el.__name__ for el in self])
-            + "})"
-        )
-
-
-class AltSet(frozenset):
-    #def __str__(self):
-    #    return (
-    #        self.__class__.__name__
-    #        + "({"
-    #        + ",\n".join([str(el) for el in self])
-    #        + "})"
-    #    )
-    def __repr__(self):
-        return (
-            self.__class__.__name__
-            + "({\n\t"
-            + ",\n\t".join([repr(el) for el in self])
-            + "\n})"
-        )
-
-
-class AltSetSet(frozenset):
-
-    #def __str__(self):
-    #    return (
-    #        self.__class__.__name__
-    #        + "({"
-    #        + ",\n".join([str(el) for el in self])
-    #        + "})"
-    #     )
-
-    def __repr__(self):
-        return (
-            self.__class__.__name__
-            + "({"
-            + ",\n".join([repr(el) for el in self])
-            + "})"
-        )
-
-    def combine(self) -> AltSet[TypeSet]:
-        # for a computer with more than one argument the
-        # altsets of the arguments have to be combined
-        # The result is the set of the union of all combinations 
-        # of the altsets of  the arguments.
-        set_tupels = list_mult2([el for el in self])
-        return AltSet([TypeSet(frozenset.union(*t)) for t in set_tupels])
 
 
 class CompTree:
@@ -343,6 +369,7 @@ class CompTree:
                     self.root_computer
                 })
             )
+
         ])
 
     @property
@@ -366,21 +393,41 @@ class CompTree:
             + "\n)"
         )
 
-    def depgraph(self) -> MayBeDepGraph:
-        dg = DepGraph()
-        rc=self.root_computer
-        dg.add_node(rc)
-        for tt in self.type_trees:
-            mb_dg=tt.depgraph()
-            if isinstance(mb_dg, JustDepGraph):
-                sub_graph = mb_dg.dg
-                dg.update(sub_graph)
-                dg.add_edge(rc,sub_graph.root_node())
-        #from IPython import embed;embed()  
-        return JustDepGraph(dg)
+    def computable_depgraphs(
+        self,
+        given: TypeSet = TypeSet({})
+    ) -> MayBeDepGraphs:
 
+        # first check that we compute everything we need
+        if any(
+            (
+               isinstance(tt.computable_depgraphs(given), NoDepGraphs)
+               for tt in self.type_trees
+            )):
+            return NoDepGraphs()
+        else:
+            # now we look at the possible combinations to provide the arguments
+            ass=(
+                [tt.computable_depgraphs(given).dep_graphs for tt in self.type_trees]
+            )
+            tup_list=list_mult2(ass)
+            
+            rc = self.root_computer
 
+            def extend_sub_dgs(sub_dgs):
+                dg = DepGraph()
+                dg.add_node(rc)
+                for sdg in sub_dgs:
+                    if len(sdg.nodes)>0:
+                        dg.update(sdg)
+                        dg.add_edge(rc,sdg.root_node())
+                return dg
+            
+            extended = tuple((extend_sub_dgs(sdgs) for sdgs in tup_list))
+            #from IPython import embed;embed()
+            return JustDepGraphs(extended)
 
+    
     def to_networkx_graph(self,avoid_types):
         g = OrGraphNX()
         root_computer = self.root_computer

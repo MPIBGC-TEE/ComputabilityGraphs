@@ -1,5 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+import igraph as ig
 from testinfrastructure.InDirTest import InDirTest
 from ComputabilityGraphs.or_graph_helpers import (
     TypeNode,

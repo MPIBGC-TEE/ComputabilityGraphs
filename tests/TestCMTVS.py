@@ -136,3 +136,47 @@ class TestCMTVS(unittest.TestCase):
             cmtvs._get_single_value_by_depgraph(A),
             A(6)
         )
+
+    def test_get_single_value_by_TypeTree(self):
+        
+        cmtvs = self.cmtvs
+
+        self.assertEqual( 
+            cmtvs._get_single_value_by_TypeTree(E),
+            E(1)
+        )
+        
+        # now get a variable that is not provided directly but computable in one step
+        self.assertEqual( 
+            cmtvs._get_single_value_by_TypeTree(C),
+            C(2)
+        )
+        #self.assertEqual(res,C(2)) 
+        # now get a variable that is not provided directly but computable in two steps
+        self.assertEqual( 
+            cmtvs._get_single_value_by_TypeTree(B),
+            B(4)
+        )
+        # now we create a situation where there are more than one possible TypeTree
+        # because there is a variable with are more than one computers providing it. 
+        computers={
+            a_from_i,
+            a_from_b_c, 
+            b_from_c_d,
+            c_from_e_f,
+            d_from_g_h
+        }
+        provided_values = {
+            E(1),
+            F(1),
+            G(1),
+            H(1)
+        }
+        cmtvs = CMTVS(
+            provided_values,
+            computers
+        )
+        self.assertEqual( 
+            cmtvs._get_single_value_by_TypeTree(A),
+            A(6)
+        )
