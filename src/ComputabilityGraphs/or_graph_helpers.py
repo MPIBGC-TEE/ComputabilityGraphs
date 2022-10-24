@@ -79,7 +79,7 @@ class AltSetSet(frozenset):
             + "})"
         )
 
-    def combine(self) -> AltSet[TypeSet]:
+    def combine(self) -> "AltSet[TypeSet]":
         # for a computer with more than one argument the
         # altsets of the arguments have to be combined
         # The result is the set of the union of all combinations 
@@ -373,7 +373,7 @@ class CompTree:
         ])
 
     @property
-    def psts(self) -> AltSet[TypeSet]:
+    def psts(self) -> "AltSet[TypeSet]":
         # possible start types
         # every element of sss is a set of sets
         ass = AltSetSet([tt.psts for tt in self.type_trees])
