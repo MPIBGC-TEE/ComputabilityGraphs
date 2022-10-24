@@ -105,7 +105,8 @@ class CMTVS:
             # for var in self.mvars:
             for var in self.computable_mvar_types():
                 if var.__name__ == var_name:
-                    return lambda: self._get_single_value(var)
+                    #return lambda: self._get_single_value(var)
+                    return lambda: self._get_single_value_by_TypeTree(var)
         return super().__getattribute__(name)
 
     # @lru_cache
@@ -240,9 +241,9 @@ class CMTVS:
 
 
         og = type_tree.to_networkx_graph(pvt)
-        fig = plt.figure(figsize=(20,20))
-        ax = fig.add_subplot(1, 1, 1)
-        og.draw_matplotlib(ax)
-        fig.savefig("OrGraphNX.pdf")
+        #fig = plt.figure(figsize=(20,20))
+        #ax = fig.add_subplot(1, 1, 1)
+        #og.draw_matplotlib(ax)
+        #fig.savefig("OrGraphNX.pdf")
 
         return dg.compute_value(t, pvs) 
