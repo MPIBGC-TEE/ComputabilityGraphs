@@ -4,3 +4,8 @@ graphviz
 pygraphviz
 sphinx
 bokeh
+matplotlib
+scipy
+ipywidgets
+pydot
+python-igraph

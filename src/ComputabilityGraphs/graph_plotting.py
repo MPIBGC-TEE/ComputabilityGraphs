@@ -362,7 +362,7 @@ def bokeh_plot(
             source=source, 
             border_line_color='black',
             background_fill_color='white',
-            render_mode='canvas'
+            #render_mode='canvas' #caused testerror
     )
 
     node_dict = dict()
