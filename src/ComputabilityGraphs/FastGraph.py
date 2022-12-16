@@ -3,7 +3,6 @@ from typing import FrozenSet
 from copy import deepcopy
 from frozendict import frozendict
 from functools import reduce
-from pygraphviz.agraph import AGraph
 from .TypeSynonyms import  Computer
 from .Decomposition import Decomposition
 from .Node import Node
@@ -328,45 +327,45 @@ class FastGraph:
     
         
 
-    def to_AGraph(
-            self,
-            mvar_aliases=frozendict({}),
-            computer_aliases=frozendict({}),
-            targetNode=None,
-            pos=None,
-            **kwargs
-    ):
-        nodes = self.get_Nodes()
-        decomps = self.get_Decomps()
-        A = AGraph(directed=True)
-        A.node_attr["style"] = "filled"
-        A.node_attr["shape"] = "rectangle"
-        A.node_attr["fixedsize"] = "false"
-        A.node_attr["fontcolor"] = "black"
+   #  def to_AGraph(
+   #          self,
+   #          mvar_aliases=frozendict({}),
+   #          computer_aliases=frozendict({}),
+   #          targetNode=None,
+   #          pos=None,
+   #          **kwargs
+   #  ):
+   #      nodes = self.get_Nodes()
+   #      decomps = self.get_Decomps()
+   #      A = AGraph(directed=True)
+   #      A.node_attr["style"] = "filled"
+   #      A.node_attr["shape"] = "rectangle"
+   #      A.node_attr["fixedsize"] = "false"
+   #      A.node_attr["fontcolor"] = "black"
 
-        for node in nodes:
-            A.add_node(varset_2_string(node, mvar_aliases),color='orange')
+   #      for node in nodes:
+   #          A.add_node(varset_2_string(node, mvar_aliases),color='orange')
 
-        for node in decomps:
-            A.add_node(varsettuple_2_string(node, mvar_aliases),color='green')
+   #      for node in decomps:
+   #          A.add_node(varsettuple_2_string(node, mvar_aliases),color='green')
 
-        edges = self.dg.edges(data=True)
-        for edge in edges:
-            s, t, data_dict = edge
-            if s in nodes: 
-                computer_sets = data_dict["computer_sets"]
-                ss = varset_2_string(s, mvar_aliases)
-                st = varsettuple_2_string(t, mvar_aliases)
-                for cs in computer_sets:
-                    for c in cs:
-                        A.add_edge(ss, st)
-                        Ae = A.get_edge(ss, st)
-                        #Ae.attr["color"] = cf(c)
-                        #Ae.attr["fontcolor"] = cf(c)
-                        Ae.attr["label"] = c.__name__
-            else:
-                ss = varsettuple_2_string(s, mvar_aliases)
-                st = varset_2_string(t, mvar_aliases)
-                A.layout('circo')
-                A.add_edge(ss, st)
-        return A
+   #      edges = self.dg.edges(data=True)
+   #      for edge in edges:
+   #          s, t, data_dict = edge
+   #          if s in nodes: 
+   #              computer_sets = data_dict["computer_sets"]
+   #              ss = varset_2_string(s, mvar_aliases)
+   #              st = varsettuple_2_string(t, mvar_aliases)
+   #              for cs in computer_sets:
+   #                  for c in cs:
+   #                      A.add_edge(ss, st)
+   #                      Ae = A.get_edge(ss, st)
+   #                      #Ae.attr["color"] = cf(c)
+   #                      #Ae.attr["fontcolor"] = cf(c)
+   #                      Ae.attr["label"] = c.__name__
+   #          else:
+   #              ss = varsettuple_2_string(s, mvar_aliases)
+   #              st = varset_2_string(t, mvar_aliases)
+   #              A.layout('circo')
+   #              A.add_edge(ss, st)
+   #      return A

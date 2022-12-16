@@ -1,17 +1,14 @@
 from functools import lru_cache, reduce
 import networkx as nx
-import time
 import matplotlib.pyplot as plt
-from matplotlib.colors import CSS4_COLORS, BASE_COLORS, TABLEAU_COLORS
-from pygraphviz.agraph import AGraph
-from typing import List, Set, Tuple, Callable, FrozenSet
+from typing import Set, Tuple, FrozenSet
 from copy import deepcopy
 from frozendict import frozendict
 
-from .TypeSynonyms import  Computer
+from .TypeSynonyms import Computer
 from . import helpers as h
 from .str_helpers import nodes_2_string
-from .FastGraph import  FastGraph
+from .FastGraph import FastGraph
 from .Decomposition import Decomposition
 from .Node import Node
 from .ComputerSet import ComputerSet

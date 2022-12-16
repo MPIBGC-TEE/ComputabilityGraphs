@@ -1,7 +1,6 @@
 frozendict
 networkx
 graphviz
-pygraphviz
 sphinx
 bokeh
 matplotlib

@@ -1,13 +1,10 @@
-from functools import lru_cache, reduce
+from functools import reduce
 import networkx as nx
 import time
-import matplotlib.pyplot as plt
-from matplotlib.colors import CSS4_COLORS, BASE_COLORS, TABLEAU_COLORS
-from pygraphviz.agraph import AGraph
-from typing import List, Set, Tuple, Callable
-from copy import deepcopy
+from typing import Set, Callable
+# from copy import deepcopy
 from frozendict import frozendict
-from testinfrastructure.helpers import pp, pe
+# from testinfrastructure.helpers import pp, pe
 
 from .helpers import (
     all_mvars

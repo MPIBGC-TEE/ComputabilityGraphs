@@ -119,13 +119,13 @@ class OrGraphNX(nx.DiGraph):
         # ohter datatypes are not supported and of the two integers
         # are safer since not all strings go through without errors
         H = nx.convert_node_labels_to_integers(self, label_attribute='node_label')
-        H_layout = nx.nx_pydot.pydot_layout(H, prog='dot')
-        pos = {H.nodes[n]['node_label']: p for n, p in H_layout.items()}
+        #H_layout = nx.nx_pydot.pydot_layout(H, prog='dot')
+        #pos = {H.nodes[n]['node_label']: p for n, p in H_layout.items()}
 
         nd = self.nodes.data()
 
-        # pos = nx.circular_layout(dg)
-        # pos = nx.kamada_kawai_layout(dg)
+        # pos = nx.circular_layout(self)
+        pos = nx.kamada_kawai_layout(self)
         type_nodes = [n for n in self.nodes if nd[n]["bipartite"] == "type"]
         given_nodes = [] if given is None else [
             n for n in type_nodes

@@ -1,4 +1,3 @@
-from pygraphviz.agraph import AGraph
 from typing import Callable
 from functools import reduce
 from frozendict import frozendict
@@ -444,47 +443,47 @@ def bokeh_plot(
     return plot
 
 
-def AGraphComputerSetMultiDiGraph(spsg: nx.MultiDiGraph, cf: Callable) -> AGraph:
-    A = nx.nx_agraph.to_agraph(spsg)
-    A = AGraph(directed=True)
-    A.node_attr["style"] = "filled"
-    A.node_attr["shape"] = "rectangle"
-    A.node_attr["fixedsize"] = "false"
-    A.node_attr["fontcolor"] = "black"
-
-    for node in spsg.nodes:
-        A.add_node(node_2_string(node))
-    edges = spsg.edges(data=True)
-    for edge in edges:
-        s, t, data_dict = edge
-        computer_set = data_dict["computers"]
-        ss, st = tuple(map(node_2_string, (s, t)))
-        A.add_edge(ss, st)
-        Ae = A.get_edge(ss, st)
-        Ae.attr["label"] = "\n".join([c.__name__ for c in computer_set])
-    return A
-
-
-def AGraphComputerMultiDiGraph(spsg: nx.MultiDiGraph, cf: Callable) -> AGraph:
-    A = nx.nx_agraph.to_agraph(spsg)
-    A = AGraph(directed=True)
-    A.node_attr["style"] = "filled"
-    A.node_attr["shape"] = "rectangle"
-    A.node_attr["fixedsize"] = "false"
-    A.node_attr["fontcolor"] = "black"
-
-    for node in spsg.nodes:
-        A.add_node(node_2_string(node))
-    edges = spsg.edges(data=True)
-    for edge in edges:
-        s, t, data_dict = edge
-        computer_set = data_dict["computers"]
-        for c in computer_set:
-            ss, st = tuple(map(node_2_string, (s, t)))
-            A.add_edge(ss, st)
-            Ae = A.get_edge(ss, st)
-            Ae.attr["color"] = cf(c)
-            Ae.attr["fontcolor"] = cf(c)
-            Ae.attr["label"] = c.__name__
-
-    return A
+# def AGraphComputerSetMultiDiGraph(spsg: nx.MultiDiGraph, cf: Callable) -> AGraph:
+#     A = nx.nx_agraph.to_agraph(spsg)
+#     A = AGraph(directed=True)
+#     A.node_attr["style"] = "filled"
+#     A.node_attr["shape"] = "rectangle"
+#     A.node_attr["fixedsize"] = "false"
+#     A.node_attr["fontcolor"] = "black"
+# 
+#     for node in spsg.nodes:
+#         A.add_node(node_2_string(node))
+#     edges = spsg.edges(data=True)
+#     for edge in edges:
+#         s, t, data_dict = edge
+#         computer_set = data_dict["computers"]
+#         ss, st = tuple(map(node_2_string, (s, t)))
+#         A.add_edge(ss, st)
+#         Ae = A.get_edge(ss, st)
+#         Ae.attr["label"] = "\n".join([c.__name__ for c in computer_set])
+#     return A
+# 
+# 
+# def AGraphComputerMultiDiGraph(spsg: nx.MultiDiGraph, cf: Callable) -> AGraph:
+#     A = nx.nx_agraph.to_agraph(spsg)
+#     A = AGraph(directed=True)
+#     A.node_attr["style"] = "filled"
+#     A.node_attr["shape"] = "rectangle"
+#     A.node_attr["fixedsize"] = "false"
+#     A.node_attr["fontcolor"] = "black"
+# 
+#     for node in spsg.nodes:
+#         A.add_node(node_2_string(node))
+#     edges = spsg.edges(data=True)
+#     for edge in edges:
+#         s, t, data_dict = edge
+#         computer_set = data_dict["computers"]
+#         for c in computer_set:
+#             ss, st = tuple(map(node_2_string, (s, t)))
+#             A.add_edge(ss, st)
+#             Ae = A.get_edge(ss, st)
+#             Ae.attr["color"] = cf(c)
+#             Ae.attr["fontcolor"] = cf(c)
+#             Ae.attr["label"] = c.__name__
+# 
+#     return A
