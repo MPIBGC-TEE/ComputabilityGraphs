@@ -34,8 +34,10 @@ setup(
         "frozendict",
         "testinfrastructure",  # also on https://github.com/MPIBGC-TEE/testinfrastructure.githttps://github.com/MPIBGC-TEE/testinfrastructure.git
         "networkx",
-        "pygraphviz",
-        "bokeh"
+        #"pygraphviz",
+        "bokeh",
+        "igraph",
+        "ipywidgets",
     ],
         include_package_data=True,
         zip_safe=False

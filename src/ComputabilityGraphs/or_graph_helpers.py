@@ -7,6 +7,9 @@ import networkx as nx
 # from networkx.algorithms.operators.binary import difference
 # from functools import lru_cache, reduce, _lru_cache_wrapper
 from functools import reduce, _lru_cache_wrapper
+import matplotlib.pyplot as plt
+from ipywidgets import Layout, Button, Box, VBox, Label, HTMLMath, Output
+
 from .OrGraphs.MayBeDepGraphs import (
     NoDepGraphs, 
     JustDepGraphs,
@@ -15,33 +18,13 @@ from .OrGraphs.MayBeDepGraphs import (
 from .dep_graph_helpers import DepGraph
 
 from ComputabilityGraphs.ComputerSet import ComputerSet
-from ComputabilityGraphs.helpers import (
+from .TypeSet import TypeSet
+from .helpers import (
     input_mvars,
     output_mvar,
     list_mult2,
     add_tab
 )
-
-class TypeSet(frozenset):
-    def __str__(self):
-        return (
-            self.__class__.__name__
-            + "({})".format(self.short_str()) 
-        )
-
-    def short_str(self):
-        return (
-            "{"
-            + ",".join([el.__name__ for el in self])
-            + "}"
-        )
-    def __repr__(self):
-        return (
-            self.__class__.__name__
-            + "({"
-            + ",".join([el.__name__ for el in self])
-            + "})"
-        )
 
 
 class AltSet(frozenset):
@@ -69,7 +52,7 @@ class AltSetSet(frozenset):
     #        + "({"
     #        + ",\n".join([str(el) for el in self])
     #        + "})"
-    #     )
+    #     )-vals_array_mean[0])
 
     def __repr__(self):
         return (
@@ -95,6 +78,27 @@ def add_tab(s: str):
     ) 
 
 
+def type_node_to_str(n, type_aliases):
+    #from IPython import embed; embed()
+    t, avoid_types = n
+    res = "{}\n{}".format(
+            t.__name__ ,
+            TypeSet(avoid_types).short_str()
+        ) if type_aliases is None else "{}\n{}".format(
+            type_aliases[t],
+            "{"
+            + ",".join([ type_aliases[t] for t in avoid_types])
+            + "}"
+        )
+    return res
+
+def computer_node_to_str(n, computer_aliases):
+    c, avoid_types = n
+    if computer_aliases is None:
+        res = c.__wrapped__.__name__ if isinstance( c, _lru_cache_wrapper) else c.__name__
+    else:
+        res = computer_aliases[c] 
+    return res
 
 class OrGraphNX(nx.DiGraph):
     # class to represent the data structure as a bipartite networkx.DiGraph
@@ -102,13 +106,14 @@ class OrGraphNX(nx.DiGraph):
     def root_node(self):
         return [n for n in  self.nodes if self.in_degree(n)==0][0]
 
+    ###############################################################
     def draw_matplotlib(
             self,
             ax,
+            given=None,
             computer_aliases=None,
             type_aliases=None
     ):
-
         # for pygraphiz to work we have to translate the nodes
         # to strings  or better integers
         # ohter datatypes are not supported and of the two integers
@@ -118,74 +123,232 @@ class OrGraphNX(nx.DiGraph):
         pos = {H.nodes[n]['node_label']: p for n, p in H_layout.items()}
 
         nd = self.nodes.data()
-        
-        #pos = nx.circular_layout(dg)
+
+        # pos = nx.circular_layout(dg)
         # pos = nx.kamada_kawai_layout(dg)
         type_nodes = [n for n in self.nodes if nd[n]["bipartite"] == "type"]
-        nx.draw_networkx_nodes(
-            self,
-	        pos=pos,
-	        ax=ax,
-	        nodelist=type_nodes,
-	        node_color="lightblue",
-			alpha=0.5,
-        )
+        given_nodes = [] if given is None else [
+            n for n in type_nodes
+            if n[0] in given
+        ] 
+        missing_nodes = [] if given is None else [
+            n for n in type_nodes
+            if (n[0] not in given) & (n != self.root_node())
+        ] 
         computer_nodes = [
             n for n in self.nodes
             if nd[n]["bipartite"] == "computer"
         ]
+        ns = 100
+
         nx.draw_networkx_nodes(
             self,
-			pos=pos,
-			ax=ax,
-			nodelist=computer_nodes,
-			node_color="red",
-			alpha=0.5,
+            pos=pos,
+            ax=ax,
+            #nodelist=type_nodes,
+            nodelist=[self.root_node()],
+            node_color="red",
+            node_size=ns,
+            alpha=1,
+            label="target type"
         )
-        nx.draw_networkx_edges(
-            self, pos=pos, ax=ax, edgelist=self.edges()
+
+        nx.draw_networkx_nodes(
+            self,
+            pos=pos,
+            ax=ax,
+            #nodelist=type_nodes,
+            nodelist=missing_nodes,
+            node_color="red",
+            node_size=ns,
+            alpha=0.3,
+            # fixme mm:
+            # we could use the structure to 
+            # check if a branch is computable and make it green
+            # so that only the non computable nodes show as red
+            label="not provided"
+        )
+
+        nx.draw_networkx_nodes(
+            self,
+            pos=pos,
+            ax=ax,
+            nodelist=computer_nodes,
+            node_color="gray",
+            node_size=ns,
+            alpha=0.3,
+            label="function"
         )
         
-        def type_node_to_str(n):
-            t, avoid_types = n
-            return "{}\n{}".format(
-                t.__name__ ,
-                TypeSet(avoid_types).short_str()
-            )
-            
-        nx.draw_networkx_labels(
+        nx.draw_networkx_nodes(
             self,
-            pos=pos, 
-            ax=ax, 
-            labels={
-                tn: type_node_to_str(tn) 
-                for tn in type_nodes
-            }, 
-            font_color='black'
+            pos=pos,
+            ax=ax,
+            nodelist=given_nodes,
+            node_color="green",
+            node_size=ns,
+            label="given",
+            alpha=0.3,
         )
-        def computer_nodes_to_str(n):
-            c, avoid_types=n
-            return c.__wrapped__.__name__ if isinstance(
-                c,
-                _lru_cache_wrapper
-            ) else c.__name__
 
         nx.draw_networkx_labels(
             self,
+            pos=pos,
+            ax=ax,
+            labels={
+                tn: type_node_to_str(tn, type_aliases)
+                for tn in type_nodes
+            },
+            font_color='black'
+        )
+        nx.draw_networkx_labels(
+            self,
             pos=pos, 
             ax=ax, 
             labels={
-                cn: computer_nodes_to_str(cn)
+                cn: computer_node_to_str(cn, computer_aliases)
                 for cn in computer_nodes
             }, 
             #font_color='white'
             font_color='black'
         )
+        nx.draw_networkx_edges(
+            self, pos=pos, ax=ax, edgelist=self.edges()
+        )
+        ax.legend()
+        
 
 
 class TypeTree:
-    # superclass
-    pass
+    # superclass only
+    ############################################################################
+    def jupyter_widget(
+            self,
+            type_aliases_tup=None,
+            computer_aliases_tup=None,
+            given=frozenset()
+        ):
+        from IPython.display import display
+        if type_aliases_tup is not None:
+            type_aliases,ta_key = type_aliases_tup
+        else: 
+            type_aliases = None   
+
+        if computer_aliases_tup is not None:
+            computer_aliases,ca_key = computer_aliases_tup
+        else: 
+            computer_aliases = None   
+
+        cw1 = '20%'
+        cw2 = '80%'
+        cw3 = '100%'
+
+        B = self.to_networkx_graph(avoid_types=TypeSet({}))
+        nd = B.nodes.data()
+        type_nodes = [n for n in B.nodes if nd[n]["bipartite"] == "type"]
+        type_names = [tn[0].__name__ for tn in type_nodes]
+        computer_nodes = [
+            n for n in B.nodes
+            if nd[n]["bipartite"] == "computer"
+        ]
+        computer_names = [cn[0].__name__ for cn in computer_nodes]
+        with plt.ioff():
+            fig = plt.figure()#figsize=(20, 20))
+            #rect = 0, 0, 0.8, 1.2  # l, b, w, h
+            rect = 0, 0, 1, 1  # l, b, w, h
+            ax = fig.add_axes(rect)
+
+        graph_out = Output(
+            layout=Layout(
+                height='auto',
+                #width="{}%".format(thumbnail_width),
+                width=cw3,
+                #min_width=cw3,
+                description="Dependency Tree",
+            )
+        )
+    
+        with graph_out:
+            ax.clear()
+            #ax = fig.add_subplot(1, 1, 1)
+            B.draw_matplotlib(
+                ax,
+                computer_aliases=computer_aliases,
+                type_aliases=type_aliases,
+                given=given
+            )
+            display(ax.figure)
+            plt.close(fig)
+
+        computer_aliases_by_name = {
+            c.__name__: computer_aliases[c]
+            for c, avoid_types in computer_nodes
+        }
+
+        type_aliases_by_name = {
+            t.__name__: type_aliases[t]
+            for t, avoid_types in type_nodes
+        }
+        #from IPython import embed; embed()
+
+        def legend(aliases_by_name):
+            if aliases_by_name is None:
+                res = [] 
+            else:
+                # create in index to look up the computer from the alias
+                reverse_d = {
+                    val: key
+                    for key, val in aliases_by_name.items()
+                }
+                sorted_aliases = sorted(reverse_d.keys(), key=ca_key)
+
+                res = VBox(
+                    children=[
+                        Box(
+                            children=[
+                                Button(
+                                    layout=Layout(height='auto', min_width=cw1),
+                                    description=a,  
+                                    button_style='warning'
+                                ),
+                                Button(
+                                    layout=Layout(height='auto', min_width=cw2),
+                                    description=str(reverse_d[a]),
+                                    button_style='warning',
+                                    color="red"
+                                )
+                            ],
+                            layout= Layout(
+                                #overflow='scroll hidden',
+                                #border='3px solid black',
+                                #width='1000px',
+                                #width='100%',
+                                height='',
+                                #flex_flow='row',
+                                #display='flex'
+                            )
+                        )
+                        for a in sorted_aliases 
+                   ]
+                )
+                return res
+
+        return VBox(
+            [
+                Box(
+                    children=[legend(type_aliases_by_name)],
+                    layout= Layout()
+                ),
+                Box(
+                    children=[graph_out],
+                    layout= Layout()
+                ),
+                Box(
+                    children= [legend(computer_aliases_by_name)],
+                    layout= Layout()
+                )
+            ]
+        )
 
 
 class TypeNode(TypeTree):
@@ -285,6 +448,8 @@ class TypeNode(TypeTree):
             g.add_edge(node, sub_graph.root_node())
 
         return g
+
+
 
 
 class TypeLeaf(TypeTree):

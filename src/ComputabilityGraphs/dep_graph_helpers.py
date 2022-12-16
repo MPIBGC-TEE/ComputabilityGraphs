@@ -149,8 +149,8 @@ class DepGraph(nx.DiGraph):
             )    
             + "\n)"
         )
-    
-    def draw_matplotlib(self,ax):
+
+    def draw_matplotlib(self, ax):
         gg=nx.DiGraph()
         gg.add_edges_from(
             map(
@@ -166,8 +166,6 @@ class DepGraph(nx.DiGraph):
         )
         nx.draw_networkx(gg,ax=ax,pos=nx.kamada_kawai_layout(gg))
 
-
-
     def required_mvars(
             self,
             given: Set[type]
@@ -179,7 +177,7 @@ class DepGraph(nx.DiGraph):
                 frozenset({})
         )
         return args if given is None else args.difference(given)
-    
+
     def to_bipartite(self):
         cs=copy(self.nodes)
         B = BiGraph()
@@ -198,7 +196,6 @@ class DepGraph(nx.DiGraph):
         B.add_edges_from([ (a,c) for c in cs for a in h.input_mvars(c) ])
         return B
 
-
     def __hash__(self):
         return hash(
             (
@@ -213,20 +210,24 @@ class DepGraph(nx.DiGraph):
             type_aliases=None,
             given=frozenset()
         ):
-        cw1='20%'
-        cw2='5%'
-        cw3='50%'
-        cw4=cw2
-        cw5=cw1
-        
-        B=self.to_bipartite()
+        cw1 = '20%'
+        cw2 = '5%'
+        cw3 = '50%'
+        cw4 = cw2
+        cw5 = cw1
+
+        B = self.to_bipartite()
+        computer_nodes = [
+            n for n in self.nodes
+            if nd[n]["bipartite"] == "computer"
+        ]
 
         with plt.ioff():
             fig = plt.figure(figsize=(6,5))
             #rect = 0, 0, 0.8, 1.2  # l, b, w, h
             rect = 0, 0, 1, 1  # l, b, w, h
             ax = fig.add_axes(rect)
-        
+
         graph_out=Output(
             layout=Layout(
                 height='auto',

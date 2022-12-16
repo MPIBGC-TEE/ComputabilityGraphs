@@ -144,19 +144,19 @@ class TestOrGraphs(InDirTest):
         self.assertEqual(
             CompTree(
                 root_computer=g_from_p_q,
-                type_trees = frozenset([
+                type_trees=frozenset([
                     TypeNode(
-        				comp_trees=frozenset([
+                        comp_trees=frozenset([
                             CompTree(
                                 root_computer=p_from_r_s,
-                                type_trees = frozenset([
+                                type_trees=frozenset([
                                     TypeLeaf(R),
                                     TypeLeaf(S),
                                 ])
                             ),
                             CompTree(
                                 root_computer=p_from_i_j_k,
-                                type_trees = frozenset([
+                                type_trees=frozenset([
                                     TypeLeaf(I),
                                     TypeLeaf(J),
                                     TypeLeaf(K)
@@ -165,10 +165,10 @@ class TestOrGraphs(InDirTest):
                         ])
                     ),
                     TypeNode(
-				        comp_trees=frozenset([
+                        comp_trees=frozenset([
                             CompTree(
                                 root_computer=q_from_i_j_k,
-                                type_trees = frozenset([
+                                type_trees=frozenset([
                                     TypeLeaf(I),
                                     TypeLeaf(J),
                                     TypeLeaf(K)
@@ -183,24 +183,97 @@ class TestOrGraphs(InDirTest):
                 TypeSet([I, J, K])
             ])
         )
+
     def test_draw_matplotlib(self):
         res = t_tree(
             root_type=G,
             available_computers=ComputerSet([g_from_i_j_k, g_from_p_q]),
             avoid_types=frozenset({}),
         )
-        fig = plt.figure(figsize=(15,15))
+        fig = plt.figure(figsize=(15, 15))
         ax = fig.add_subplot(1, 1, 1)
         og = res.to_networkx_graph(
             avoid_types=TypeSet({})
         )
         og.draw_matplotlib(ax)
         fig.savefig("OrGraphNX.pdf")
+
+    def test_draw_matplotlib_with_given(self):
+        res = t_tree(
+            root_type=G,
+            available_computers=ComputerSet([g_from_i_j_k, g_from_p_q]),
+            avoid_types=frozenset({}),
+        )
+        fig = plt.figure(figsize=(15, 15))
+        ax = fig.add_subplot(1, 1, 1)
+        og = res.to_networkx_graph(
+            avoid_types=TypeSet({})
+        )
+        og.draw_matplotlib(ax,given={I,K,Q})
+        fig.savefig("OrGraphNX.pdf")
+        # from IPython import embed; embed()
+
+    def test_draw_matplotlib_with_type_aliases(self):
+        computers = ComputerSet([g_from_i_j_k, g_from_p_q])
+        res = t_tree(
+            root_type=G,
+            available_computers=computers,
+            avoid_types=frozenset({}),
+        )
+        import string
+        from ComputabilityGraphs import helpers as cgh
+        t_abbreviations = [f"{ul}" for ul in string.ascii_uppercase]
+        c_abbreviations = [f"{ll}" for ll in string.ascii_lowercase]
+        type_aliases = {
+            t:t_abbreviations[i] 
+            for i,t in enumerate(cgh.all_mvars(computers))
+        }
+        computer_aliases = {
+            c:c_abbreviations[i] 
+            for i,c in enumerate(computers)
+        }
+        fig = plt.figure(figsize=(15, 15))
+        ax = fig.add_subplot(1, 1, 1)
+        og = res.to_networkx_graph(
+            avoid_types=TypeSet({})
+        )
+        og.draw_matplotlib(
+            ax,
+            type_aliases=type_aliases,
+            computer_aliases=computer_aliases
+        )
+        fig.savefig("OrGraphNX.pdf")
         # from IPython import embed; embed()
     
+    def test_jupyter_widget(self):
+        computers = ComputerSet([g_from_i_j_k, g_from_p_q])
+        res = t_tree(
+            root_type=G,
+            available_computers=computers,
+            avoid_types=frozenset({}),
+        )
+        import string
+        from ComputabilityGraphs import helpers as cgh
+        t_abbreviations = [f"{ul}" for ul in string.ascii_uppercase]
+        c_abbreviations = [f"{ll}" for ll in string.ascii_lowercase]
+        type_aliases = {
+            t:t_abbreviations[i] 
+            for i,t in enumerate(cgh.all_mvars(computers))
+        }
+        computer_aliases = {
+            c:c_abbreviations[i] 
+            for i,c in enumerate(computers)
+        }
+        fig = plt.figure(figsize=(15, 15))
+        ax = fig.add_subplot(1, 1, 1)
+        key_func= lambda s: ord(s)
+        res.jupyter_widget(
+            (type_aliases, key_func),
+            (computer_aliases, key_func)
+        )
+
     def test_draw_igraph(self):
         # incomplete, but the layout works very well 
-        # 
         res = t_tree(
             root_type=G,
             available_computers=ComputerSet([g_from_i_j_k, g_from_p_q]),
