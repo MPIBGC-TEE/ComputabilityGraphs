@@ -289,7 +289,7 @@ class TestOrGraphs(InDirTest):
         #edge_color_dict = {'in':'blue','internal':'black','out':'red'}
         #edge_colors = [edge_color_dict[e['type']] for e in IG.es]
         layout=IG.layout('sugiyama')
-        
+         
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         ig.plot(
@@ -302,3 +302,32 @@ class TestOrGraphs(InDirTest):
         )
         fig.savefig("IGraph.pdf")
 
+    def test_draw_igraph_with_given(self):
+        # incomplete, but the layout works very well 
+        res = t_tree(
+            root_type=G,
+            available_computers=ComputerSet([g_from_i_j_k, g_from_p_q]),
+            avoid_types=frozenset({}),
+        )
+        og = res.to_networkx_graph(
+            avoid_types=TypeSet({})
+        )
+        IG= ig.Graph.from_networkx(og) 
+        vertex_size = [10 for v in IG.vs]
+        labels = [v for v in IG.vs]
+
+        #edge_color_dict = {'in':'blue','internal':'black','out':'red'}
+        #edge_colors = [edge_color_dict[e['type']] for e in IG.es]
+        layout=IG.layout('sugiyama')
+         
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        ig.plot(
+            IG,
+            layout=layout,
+            vertex_size=vertex_size,
+            vertex_label=labels,
+            #edge_color=edge_colors
+            target=ax
+        )
+        fig.savefig("IGraph.pdf")
