@@ -8,6 +8,8 @@ import networkx as nx
 # from functools import lru_cache, reduce, _lru_cache_wrapper
 from functools import reduce, _lru_cache_wrapper
 import matplotlib.pyplot as plt
+from collections import OrderedDict
+import igraph as ig
 from ipywidgets import Layout, Button, Box, VBox, Label, HTMLMath, Output
 
 from .OrGraphs.MayBeDepGraphs import (
@@ -114,18 +116,26 @@ class OrGraphNX(nx.DiGraph):
             computer_aliases=None,
             type_aliases=None
     ):
+        # pygraphiz seems a bit of a risk as a dependency since it is not actively maintained anymore
         # for pygraphiz to work we have to translate the nodes
         # to strings  or better integers
         # ohter datatypes are not supported and of the two integers
         # are safer since not all strings go through without errors
-        H = nx.convert_node_labels_to_integers(self, label_attribute='node_label')
+        # H = nx.convert_node_labels_to_integers(self, label_attribute='node_label')
         #H_layout = nx.nx_pydot.pydot_layout(H, prog='dot')
         #pos = {H.nodes[n]['node_label']: p for n, p in H_layout.items()}
 
         nd = self.nodes.data()
 
         # pos = nx.circular_layout(self)
-        pos = nx.kamada_kawai_layout(self)
+        # pos = nx.kamada_kawai_layout(self)
+
+        # we use igraph for the layout because
+        # networkx does not provide 'sugiyama' as an option
+        IG=ig.Graph.from_networkx(self)
+        layout=IG.layout_sugiyama()
+        nl=list(self.nodes)
+        pos = {nl[i]:coords for i,coords in enumerate(layout.coords)} 
         type_nodes = [n for n in self.nodes if nd[n]["bipartite"] == "type"]
         given_nodes = [] if given is None else [
             n for n in type_nodes
@@ -217,6 +227,34 @@ class OrGraphNX(nx.DiGraph):
         )
         ax.legend()
         
+    ###############################################################
+    def draw_igraph(
+            self,
+            ax,
+            given=None,
+            computer_aliases=None,
+            type_aliases=None
+        ):
+        # convert the networkx graph to
+        nd = self.nodes.data()
+        
+        IG= ig.Graph.from_networkx(self) 
+        vertex_size = [.1 for v in IG.vs]
+        labels = [v for v in IG.vs]
+
+
+        #edge_color_dict = {'in':'blue','internal':'black','out':'red'}
+        #edge_colors = [edge_color_dict[e['type']] for e in IG.es]  
+        layout=IG.layout('sugiyama')
+         
+        ig.plot(
+            IG,
+            layout=layout,
+            vertex_size=vertex_size,
+            vertex_label=labels,
+            #edge_color=edge_colors
+            target=ax
+        )
 
 
 class TypeTree:
