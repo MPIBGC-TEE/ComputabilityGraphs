@@ -73,9 +73,31 @@ class CMTVS:
         new._fd = frozendict({**self._fd, **{type(el): el for el in other}})
         return new
 
-    def __init__(self, iterable, computers):
+    def __init__(
+            self,
+            iterable,
+            computers
+        ):
         self._fd = frozendict({type(el): el for el in iterable})
         self.computers = frozenset(computers)
+
+    def jupyter_widget(
+            self,
+            root_type: type,
+            type_aliases_tup=None,
+            computer_aliases_tup=None,
+        ):
+        og=t_tree(
+            root_type=root_type,
+            available_computers=self.computers,
+            avoid_types=frozenset({}),
+            given_types=self.provided_mvar_types
+        )
+        return og.jupyter_widget(
+            computer_aliases_tup=computer_aliases_tup,
+            type_aliases_tup=type_aliases_tup,
+            given=self.provided_mvar_types
+        )
 
     @property
     def provided_mvar_values(self):
