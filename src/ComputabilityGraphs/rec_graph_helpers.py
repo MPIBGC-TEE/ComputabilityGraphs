@@ -15,7 +15,7 @@ def rec_graph_maker(computers):
     # we create a pair of recursive functions that call each other
     uncomputable=h.uncomputable(computers)
 
-    @lru_cache
+    @lru_cache(maxsize=None)
     def decomp_graph(
             decomposition,
             avoid_nodes,
@@ -105,7 +105,7 @@ def rec_graph_maker(computers):
     ################################################
     ################################################
 
-    @lru_cache
+    @lru_cache(maxsize=None)
     def node_graph(
             g,
             prospective_start_nodes,
@@ -207,7 +207,7 @@ def rec_graph_maker(computers):
     return (decomp_graph, node_graph)
 
     
-@lru_cache
+@lru_cache(maxsize=None)
 def fast_graph(
         cs: ComputerSet,
         root_type: type ,

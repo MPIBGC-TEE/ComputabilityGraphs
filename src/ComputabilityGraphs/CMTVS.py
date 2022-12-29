@@ -131,7 +131,7 @@ class CMTVS:
                     return lambda: self._get_single_value_by_TypeTree(var)
         return super().__getattribute__(name)
 
-    # @lru_cache
+    # @lru_cache(maxsize=None)
     def path_dict_to_single_mvar(self, t: type) -> Dict[type, List[Set[type]]]:
         node = frozenset({t})
         spsg = fgh.project_to_multiDiGraph(
