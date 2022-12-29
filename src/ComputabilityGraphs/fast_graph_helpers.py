@@ -330,7 +330,7 @@ def add_all_decompositions_to_all_nodes(
     return g_res, all_new_decompositions
 
 
-@lru_cache
+#@lru_cache
 def fast_graph(
         root_type: type,
         cs: ComputerSet,
