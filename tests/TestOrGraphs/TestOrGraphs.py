@@ -196,6 +196,7 @@ class TestOrGraphs(InDirTest):
         og = res.to_networkx_graph(
             avoid_types=TypeSet({})
         )
+        from IPython import embed;embed()
         og.draw_matplotlib(ax)
         fig.savefig("OrGraphNX.pdf")
 
@@ -213,6 +214,7 @@ class TestOrGraphs(InDirTest):
         og.draw_matplotlib(ax,given={I,K,Q})
         fig.savefig("OrGraphNX.pdf")
         # from IPython import embed; embed()
+
 
     def test_draw_matplotlib_with_type_aliases(self):
         computers = ComputerSet([g_from_i_j_k, g_from_p_q])
@@ -240,6 +242,37 @@ class TestOrGraphs(InDirTest):
             ax,
             type_aliases=type_aliases,
             computer_aliases=computer_aliases
+        )
+        fig.savefig("OrGraphNX.pdf")
+        # from IPython import embed; embed()
+    
+    def test_draw_matplotlib_with_type_aliases_without_avoid_nodes(self):
+        computers = ComputerSet([g_from_i_j_k, g_from_p_q])
+        res = t_tree(
+            root_type=G,
+            available_computers=computers,
+            avoid_types=frozenset({}),
+        )
+        t_abbreviations = [f"{ul}" for ul in string.ascii_uppercase]
+        c_abbreviations = [f"{ll}" for ll in string.ascii_lowercase]
+        type_aliases = {
+            t:t_abbreviations[i] 
+            for i,t in enumerate(h.all_mvars(computers))
+        }
+        computer_aliases = {
+            c:c_abbreviations[i] 
+            for i,c in enumerate(computers)
+        }
+        fig = plt.figure(figsize=(15, 15))
+        ax = fig.add_subplot(1, 1, 1)
+        og = res.to_networkx_graph(
+            avoid_types=TypeSet({})
+        )
+        og.draw_matplotlib(
+            ax,
+            type_aliases=type_aliases,
+            computer_aliases=computer_aliases,
+            avoid_nodes_visible=False
         )
         fig.savefig("OrGraphNX.pdf")
         # from IPython import embed; embed()
@@ -304,3 +337,5 @@ class TestOrGraphs(InDirTest):
                 type_aliases=type_aliases
         )
         fig.savefig("IGraph.pdf")
+
+

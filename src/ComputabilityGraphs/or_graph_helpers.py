@@ -80,18 +80,29 @@ def add_tab(s: str):
     ) 
 
 
-def type_node_to_str(n, type_aliases):
+def type_node_to_str(
+        n,
+        type_aliases,
+        avoid_nodes_visible=True
+    ):
     #from IPython import embed; embed()
     t, avoid_types = n
-    res = "{}\n{}".format(
-            t.__name__ ,
-            TypeSet(avoid_types).short_str()
-        ) if type_aliases is None else "{}\n{}".format(
-            type_aliases[t],
-            "{"
-            + ",".join([ type_aliases[t] for t in avoid_types])
-            + "}"
-        )
+    if avoid_nodes_visible:
+        res = "{}\n{}".format(
+                t.__name__ ,
+                TypeSet(avoid_types).short_str() 
+            ) if type_aliases is None else "{}\n{}".format(
+                type_aliases[t],
+                (
+                    "{"
+                    + ",".join([ type_aliases[t] for t in avoid_types])
+                    + "}"
+                ) 
+            )
+
+    else:
+        res = "{}".format( t.__name__) if type_aliases is None else "{}".format( type_aliases[t]) 
+     
     return res
 
 def computer_node_to_str(n, computer_aliases):
@@ -114,7 +125,8 @@ class OrGraphNX(nx.DiGraph):
             ax,
             given=None,
             computer_aliases=None,
-            type_aliases=None
+            type_aliases=None,
+            avoid_nodes_visible=False
     ):
         # pygraphiz seems a bit of a risk as a dependency since it is not actively maintained anymore
         # for pygraphiz to work we have to translate the nodes
@@ -206,7 +218,7 @@ class OrGraphNX(nx.DiGraph):
             pos=pos,
             ax=ax,
             labels={
-                tn: type_node_to_str(tn, type_aliases)
+                tn: type_node_to_str(tn, type_aliases, avoid_nodes_visible)
                 for tn in type_nodes
             },
             font_color='black'
@@ -255,7 +267,7 @@ class OrGraphNX(nx.DiGraph):
             #edge_color=edge_colors
             target=ax
         )
-
+        
 
 class TypeTree:
     # superclass only
@@ -313,7 +325,8 @@ class TypeTree:
                 ax,
                 computer_aliases=computer_aliases,
                 type_aliases=type_aliases,
-                given=given
+                given=given,
+                avoid_nodes_visible=False
             )
             display(ax.figure)
             plt.close(fig)
