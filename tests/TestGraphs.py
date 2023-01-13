@@ -14,15 +14,16 @@ from ComputabilityGraphs.graph_helpers import (
 )
 
 
-
-from testComputers import  A, B, X, Y
+from testComputers import A, B, X, Y
 from testComputers import computers
-from testComputers import ( 
+from testComputers import (
     a_from_x,
     b_from_y,
     a_from_y,
     b_from_x,
-    )
+)
+
+
 class TestGraphs(InDirTest):
     def setUp(self):
         self.computers = computers
@@ -70,7 +71,7 @@ class TestGraphs(InDirTest):
 
         self.assertTrue(equivalent_multigraphs(g1, g2))
 
-    #def test_arg_set_graph(self):
+    # def test_arg_set_graph(self):
     #    asg = arg_set_graph(D, self.computers)
     #    # For compatibility arg_set_graph returns a multigraph
     #    # although we do not have more than one edge between a pair

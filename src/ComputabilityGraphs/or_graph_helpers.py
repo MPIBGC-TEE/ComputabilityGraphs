@@ -125,7 +125,9 @@ class OrGraphNX(nx.DiGraph):
         nd = self.nodes.data()
 
         # pos = nx.circular_layout(self)
-        pos = nx.kamada_kawai_layout(self)
+        # pos = nx.kamada_kawai_layout(self)
+        pos = nx.spring_layout(self)
+        #from IPython import embed; embed()
         type_nodes = [n for n in self.nodes if nd[n]["bipartite"] == "type"]
         given_nodes = [] if given is None else [
             n for n in type_nodes

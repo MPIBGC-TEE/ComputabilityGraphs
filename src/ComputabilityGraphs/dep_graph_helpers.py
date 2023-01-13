@@ -365,7 +365,7 @@ def dep_graph(
         return g
 
 
-@lru_cache
+@lru_cache(maxsize=None)
 def sub_graph(
         comp_root: List[Callable],
         cs
