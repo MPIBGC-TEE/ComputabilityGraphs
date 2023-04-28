@@ -85,9 +85,22 @@ class CMTVS:
             self,
             root_type: type,
             type_aliases_tup=None,
-            computer_aliases_tup=None,
+            computer_aliases_tup=None
         ):
-        og=t_tree(
+
+        if type_aliases_tup is None:
+            type_aliases_tup = h.numbered_aliases(
+                "T",
+                h.all_mvars(self.computers)
+            )
+
+        if computer_aliases_tup is None:
+            computer_aliases_tup = h.numbered_aliases(
+                "f",
+                self.computers
+            )
+
+        og = t_tree(
             root_type=root_type,
             available_computers=self.computers,
             avoid_types=frozenset({}),
@@ -253,19 +266,16 @@ class CMTVS:
         # the result is an iterable.
         # So it has an __iter__ method  which returns the iterator
         itr = dgs.__iter__()
-        # we only need the first element (this enables us to 
-        # implement  the method computable_depgraphs later in 
-        # an lazy way. (not as a  set or list)
+        # we only need the first element (this enables us to implement  the
+        # method computable_depgraphs later in a lazy way. (not as a  set or
+        # list)
         dg = next(itr)
-        
 
-        #from IPython import embed;embed()
-
-
-        og = type_tree.to_networkx_graph(pvt)
-        #fig = plt.figure(figsize=(20,20))
-        #ax = fig.add_subplot(1, 1, 1)
-        #og.draw_matplotlib(ax)
-        #fig.savefig("OrGraphNX.pdf")
+        # from IPython import embed; embed()
+        # og = type_tree.to_networkx_graph(pvt)
+        # fig = plt.figure(figsize=(20,20))
+        # ax = fig.add_subplot(1, 1, 1)
+        # og.draw_matplotlib(ax)
+        # fig.savefig("OrGraphNX.pdf")
 
         return dg.compute_value(t, pvs) 

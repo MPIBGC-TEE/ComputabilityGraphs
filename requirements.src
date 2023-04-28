@@ -1,0 +1,1 @@
+-e git+https://github.com/MPIBGC-TEE/testinfrastructure.git#egg=testinfrastructure

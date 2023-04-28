@@ -32,9 +32,9 @@ setup(
     # },
     install_requires=[
         "frozendict",
-        "testinfrastructure",  # also on https://github.com/MPIBGC-TEE/testinfrastructure.githttps://github.com/MPIBGC-TEE/testinfrastructure.git
+        "testinfrastructure",  
         "networkx",
-        #"pygraphviz",
+        "matplotlib",
         "bokeh",
         "igraph",
         "ipywidgets",

@@ -14,6 +14,19 @@ from .Node import Node
 from .TypeSet import TypeSet
 from .str_helpers import node_2_string
 
+
+def numbered_aliases(prefix, things):
+    comp_abbreviations = [f"{prefix}{i}" for i in range(len(things))] 
+    d = frozendict({
+        v: comp_abbreviations[i]
+        for i, v in enumerate(things)
+    })
+    # provide an ordering function for the aliases
+    # to be used with sorted 
+    key = lambda alias: int(alias[len(prefix):])
+    return (d, key)
+
+
 def all_computer_combis_for_mvar_set(
     var_set: FrozenSet[type],
     all_computers: ComputerSet,
@@ -97,7 +110,7 @@ def computable_mvars(
 ) -> FrozenSet[type]:
     # fixme mm:
     dcmvs = directly_computable_mvars(allComputers, available_mvars)
-    print(node_2_string(dcmvs))
+    # print(node_2_string(dcmvs))
 
     if dcmvs.issubset(available_mvars):
         return available_mvars
