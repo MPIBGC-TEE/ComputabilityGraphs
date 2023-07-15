@@ -33,6 +33,36 @@ class TestCMTVS(unittest.TestCase):
     def test_repr(self):
         print(self.cmtvs)
 
+    def test_remove(self):
+        c = self.cmtvs
+        c_new = c.remove([H])
+        self.assertEqual(
+            c_new.provided_mvar_values, 
+            frozenset({
+                E(1),
+                F(1),
+                G(1),
+            })
+        )
+        #original stays unaffected
+        self.assertEqual(
+            c.provided_mvar_values,
+            self.provided_values
+        )
+        c_new = c.remove([H,G])
+        self.assertEqual(
+            c_new.provided_mvar_values, 
+            frozenset({
+                E(1),
+                F(1),
+            })
+        )
+        #original stays unaffected
+        self.assertEqual(
+            c.provided_mvar_values,
+            self.provided_values
+        )
+
     def test_update(self):
         c_new = self.cmtvs.update({H(2)})
         res = c_new.get_H()

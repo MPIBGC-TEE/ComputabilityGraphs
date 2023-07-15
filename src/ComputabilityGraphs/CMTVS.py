@@ -73,6 +73,25 @@ class CMTVS:
         new._fd = frozendict({**self._fd, **{type(el): el for el in other}})
         return new
 
+    def remove(self, types: List[type]):
+        """Although an instance of this class is a set, every variable in the set has a unique type. This is very similar to a dictionary where the keys are unique.
+        Accordingly CMTVS objects have a remove method like a list. There are however two differences:
+        1.  While the remove method of a list takes
+            the complete entry as an argument, this mehtod takes
+            a list of types an removes all
+            elements whose type is in that list.
+        2.  While the update mehtod of a dictionary changes
+            the object in place, this method returns a copy
+            and leaves the object unchanged.
+        """
+
+        new = deepcopy(self)
+        new._fd = frozendict({
+            k:v for k,v in self._fd.items()
+            if k not in types 
+        })
+        return new
+
     def __init__(
             self,
             iterable,

@@ -331,7 +331,10 @@ class TypeTree:
                                     button_style="warning",
                                 ),
                                 Button(
-                                    layout=Layout(height="auto", min_width=cw2),
+                                    layout=Layout(
+                                        height="auto", 
+                                        min_width=cw2
+                                    ),
                                     description=str(reverse_d[a]),
                                     button_style="warning",
                                     color="red",
@@ -340,11 +343,11 @@ class TypeTree:
                             layout=Layout(
                                 # overflow='scroll hidden',
                                 # border='3px solid black',
-                                # width='1000px',
-                                # width='100%',
+                                #width='1000px',
+                                width='100%',
                                 height="",
-                                # flex_flow='row',
-                                # display='flex'
+                                flex_flow='row',
+                                display='flex'
                             ),
                         )
                         for a in sorted_aliases
