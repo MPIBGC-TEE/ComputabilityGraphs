@@ -250,6 +250,70 @@ class OrGraphNX(nx.DiGraph):
 class TypeTree:
     # superclass only
     ############################################################################
+    def dep_graph_figure(
+        self, type_aliases_tup=None, computer_aliases_tup=None, given=frozenset()
+    ):
+        if type_aliases_tup is not None:
+            type_aliases, ta_key = type_aliases_tup
+        else:
+            type_aliases = None
+
+        if computer_aliases_tup is not None:
+            computer_aliases, ca_key = computer_aliases_tup
+        else:
+            computer_aliases = None
+
+        B = self.to_networkx_graph(avoid_types=TypeSet({}))
+        nd = B.nodes.data()
+        type_nodes = [n for n in B.nodes if nd[n]["bipartite"] == "type"]
+        type_names = [tn[0].__name__ for tn in type_nodes]
+        computer_nodes = [n for n in B.nodes if nd[n]["bipartite"] == "computer"]
+        computer_names = [cn[0].__name__ for cn in computer_nodes]
+        fig = plt.figure(figsize=(20, 20))
+        # rect = 0, 0, 0.8, 1.2  # l, b, w, h
+        rect = 0, 0, 1, 1  # l, b, w, h
+        ax = fig.add_axes(rect)
+        B.draw_matplotlib(
+            ax,
+            computer_aliases=computer_aliases,
+            type_aliases=type_aliases,
+            given=given,
+            avoid_nodes_visible=False,
+        )
+
+
+
+        computer_aliases_by_name = {
+            c.__name__: computer_aliases[c] for c, avoid_types in computer_nodes
+        }
+
+        type_aliases_by_name = {
+            t.__name__: type_aliases[t] for t, avoid_types in type_nodes
+        }
+        # from IPython import embed; embed()
+
+        def legend(aliases_by_name):
+            if aliases_by_name is None:
+                res = []
+            else:
+                # create in index to look up the computer from the alias
+                reverse_d = {val: key for key, val in aliases_by_name.items()}
+                sorted_aliases = sorted(reverse_d.keys(), key=ca_key)
+
+                table_lines=[
+                                f"{a}, {reverse_d[a]}"
+                    for a in sorted_aliases
+                ]
+                return """\begin{tabular}
+                    {'\\\\\n'.join(table_lines)}
+                \end{tabular}"""
+
+        return (
+                legend(type_aliases_by_name),
+                fig,
+                legend(computer_aliases_by_name)
+        )
+
     def jupyter_widget(
         self, type_aliases_tup=None, computer_aliases_tup=None, given=frozenset()
     ):

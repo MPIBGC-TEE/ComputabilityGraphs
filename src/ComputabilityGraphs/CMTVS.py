@@ -130,6 +130,38 @@ class CMTVS:
             type_aliases_tup=type_aliases_tup,
             given=self.provided_mvar_types
         )
+    
+
+    def dep_graph_figure(
+            self,
+            root_type: type,
+            type_aliases_tup=None,
+            computer_aliases_tup=None
+        ):
+
+        if type_aliases_tup is None:
+            type_aliases_tup = h.numbered_aliases(
+                "T",
+                h.all_mvars(self.computers)
+            )
+
+        if computer_aliases_tup is None:
+            computer_aliases_tup = h.numbered_aliases(
+                "f",
+                self.computers
+            )
+
+        og = t_tree(
+            root_type=root_type,
+            available_computers=self.computers,
+            avoid_types=frozenset({}),
+            given_types=self.provided_mvar_types
+        )
+        return og.dep_graph_figure(
+            computer_aliases_tup=computer_aliases_tup,
+            type_aliases_tup=type_aliases_tup,
+            given=self.provided_mvar_types
+        )
 
     @property
     def provided_mvar_values(self):
