@@ -38,6 +38,7 @@ setup(
         "bokeh",
         "igraph",
         "ipywidgets",
+        "scipy",
     ],
         include_package_data=True,
         zip_safe=False

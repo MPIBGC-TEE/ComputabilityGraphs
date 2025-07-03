@@ -196,7 +196,7 @@ class TestOrGraphs(InDirTest):
         og = res.to_networkx_graph(
             avoid_types=TypeSet({})
         )
-        from IPython import embed;embed()
+        #from IPython import embed;embed()
         og.draw_matplotlib(ax)
         fig.savefig("OrGraphNX.pdf")
 
