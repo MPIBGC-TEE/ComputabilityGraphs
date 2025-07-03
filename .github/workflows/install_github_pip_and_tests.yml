@@ -1,0 +1,28 @@
+name: test_conda_developer_installation
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    #strategy:
+    #  matrix:
+    #    python-version: [3.12]
+    #    #python-version: [3.6,3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v3
+    - run: |
+        which python3
+        python --version
+    - name: Install dependencies
+      run: |
+        ./install_github_pip.sh
+
+    - name: Test with unittest
+      run: |
+        cd tests
+        python -m unittest discover -t . -p 'Test*'
+        
+        
