@@ -1,4 +1,5 @@
-#name: test_conda_developer_installation
+# the name is actually important for the badge
+name: pip_developer_installation
 
 on: [push]
 

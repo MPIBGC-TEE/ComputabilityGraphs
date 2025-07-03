@@ -1,4 +1,5 @@
-#name: test_c651379onda_developer_installation
+# the name is actually important for the badge
+name: pip_github_installation
 
 on: [push]
 
