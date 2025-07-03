@@ -6,11 +6,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    #strategy:
-    #  matrix:
-    #    python-version: [3.9]
-    #    #python-version: [3.6,3.7, 3.8]
-
+    
     steps:
     - uses: actions/checkout@v3
       #with:
@@ -24,9 +20,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
         conda-channels: anaconda, conda-forge
     - run: conda --version
-    - run: |
-        which python
-        python --version
     - name: Install dependencies
       run: |
         sudo chmod -R 777 . 
@@ -36,6 +29,7 @@ jobs:
 
     - name: Test with unittest
       run: |
+        python -V
         cd tests
         python -m unittest discover -t . -p 'Test*'
         
