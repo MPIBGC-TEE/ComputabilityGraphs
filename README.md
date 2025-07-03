@@ -1,9 +1,10 @@
 ![test_conda_developer_installation](https://github.com/MPIBGC-TEE/ComputabilityGraphs/workflows/test_conda_developer_installation/badge.svg)
+
 ![test_conda_developer_installation](https://github.com/MPIBGC-TEE/ComputabilityGraphs/workflows/install_developer_conda_and_tests.yml/badge.svg)
 
 ## Purpose
 
-We use the package to provide an explorative user interface for ipython or jupyter notebooks,
+We use the package to provide an extest_conda_developer_installationplorative user interface for ipython or jupyter notebooks,
 It computes: 
 * what is computable  given a set of functions and a set of arguments.
 * or which addiitional arguments are necessary to compute a desired result.
@@ -20,7 +21,7 @@ which represents
   the content of a reservoir by adding the integrated influxes and substracting the integrated outfluxes is 
   the 'computable from' connection between the set of it'a argument types and it' resulttype.
 * These connections can be exploited recursively in two ways:
-  1. From a givens set of values (instances of the above types) and a set of functions we can build a computability graph
+  1. From a givens set of values (itest_conda_developer_installationnstances of the above types) and a set of functions we can build a computability graph
      forward by recursively updating what can be computed from the new results. (This is acutally rather simple and implemented 
      in a single recursive function).
      
