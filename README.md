@@ -1,4 +1,5 @@
 ![test_conda_developer_installation](https://github.com/MPIBGC-TEE/ComputabilityGraphs/workflows/test_conda_developer_installation/badge.svg)
+![test_conda_developer_installation](https://github.com/MPIBGC-TEE/ComputabilityGraphs/workflows/install_developer_conda_and_tests.yml/badge.svg)
 
 ## Purpose
 
